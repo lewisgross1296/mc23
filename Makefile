@@ -13,9 +13,11 @@ all: pdf
 pdf: $(manuscript).tex
 	mkdir -p build
 	pdflatex $(latexopt) $(manuscript)
+	makeglossaries -d build $(manuscript)
+	bibtex build/$(manuscript)
 	pdflatex $(latexopt) $(manuscript)
-	mv build/$(manuscript).pdf build/..
-
+	pdflatex $(latexopt) $(manuscript)
+	cp build/$(manuscript).pdf .
 
 pdfbibtex: $(manuscript).tex mc2023.bib
 	mkdir -p build
