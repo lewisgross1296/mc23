@@ -97,11 +97,12 @@ Heat Transfer and Neutron Transport}
   work by the Naval Nuclear Laboratories. This numerical benchmark includes $S_2$ transport, Doppler-broadened cross-sections,
   thermal conduction and expansion, and convective boundary conditions. The goals of this work are to verify Cardinal's basic
   multiphysics modeling capabilities for coupled neutronics and heat conduction, while serving as a computational ``test bed''
-  for assessing the performance of various multiphysics coupling strategies and algorithms.
-  \begin{itemize}
-      \item Temperature and flux distributions match.
-      \item Error study convergence, report slope aka first order
-  \end{itemize}
+  for assessing the performance of various multiphysics coupling strategies and algorithms. The key metrics to match from the
+  benchmark are the temperature and flux solutions. Using the analytical solution for temperature, an $L_{2}$ error norm was computed
+  for each mesh size. The error showed linear convergence with a slope of $-0.9979$ on a plot of $log(N)$ vs $log(\epsilon)$,
+  where $N$ is the number of mesh elements and $\epsilon$ is the error norm. The ratio of the computed to analytical flux in
+  each mesh element shows agreement between $0.99725$ and $1.0045$ for all the data points in each mesh. The eigenvalue $k_{eff}$
+  also agreed well with the benchmark's $0.29557$ for each mesh size.
 \end{abstract}
 \vspace{6pt}
 \keywords{Cardinal, MOOSE, OpenMC, multiphysics, verification}
@@ -143,7 +144,7 @@ and thermal expansion. $S_{2}$ transport restricts the neutron direction to only
 equations and boundary conditions in the 1-D slab is shown in Fig. \ref{fig:slab_diagram}.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.55\linewidth]{figures/1D_Benchmark_Diagram.png}
+    \includegraphics[width=0.65\linewidth]{figures/1D_Benchmark_Diagram.png}
     \caption{This diagram summarizes the domain, governing ODEs, and boundary conditions for the slab.}
     \label{fig:slab_diagram}
 \end{figure}
@@ -208,45 +209,68 @@ $\mu$, particles either continue forward ($\mu=1$) or are back-scattered ($\mu=-
 sampling the reaction physics for $\mu$. Second, since the simulation uses $k$-eigenvalue mode, neutrons born in subsequent
 generations of the simulation also need to have their angular distributions restricted to $\pm x$. \textbf{Additional details on
 the OpenMC model will be presented in the full paper.}
+\begin{itemize}
+    \item talk about generation of xs library
+    \item talk about tallies required and why
+    \item TBD move convergence discussion of batching here?
+\end{itemize}
 
 \subsection{MOOSE Heat Conduction Model}
-The \gls{moose} heat conduction module is used to solve for thermal heat conduction with convection boundary conditions.
-\textbf{TODO Additional details on the MOOSE model will be presented in the full paper.}
-\textbf{TODO describe heat conduction model in more depth}
+The \gls{moose} \gls{hcm} is used to solve for thermal heat conduction within the slab. It solves the conduction equation
+\begin{equation}\label{eq:conduction}
+    - \nabla \cdot (k_{s}(\mathbf{r},T_{s}) \nabla T_{s}(\mathbf{r})) = \dot{q}_{s},
+\end{equation}
+using the \gls{fem} available in \gls{moose}. It uses a \texttt{HeatConductionMaterial} to specify that the thermal conductivity
+obeys the benchmark's temperature dependence $\kappa(T)=\kappa_{0}T$. The boundary conditions used by \gls{moose} match temperature
+boundary condition in red shown in Fig (\ref{fig:slab_diagram}). The \gls{hcm} is coupled to OpenMC by receiving the heat source in
+each element from the tally and during each iteration, it recomputes the temperature distribution, sending it back to OpenMC for the
+next transport solve.
+
 \subsection{Convergence Criteria}
 There are two types of convergence criteria used in this benchmark. The first type of convergence criteria relates to the
 constituent iterations of single physics solves: neutronics and heat conduction. Monte Carlo is not an iterative method,
 so batching settings are required before the simulation. The k-eigenvalue simulation used 50,000 particles per batch,
-with 50 inactive batches and 50 active batches for every case. Additionally, the Robbins-Monro relaxation also contributed
+with 50 inactive batches and 100 active batches for every case. Additionally, the Robbins-Monro relaxation also contributed
 to increasing the number of histories included in the flux statistics. While flux is typically reported with an uncertainty,
 Cardinal does not currently support computing the uncertainty for cases using relaxation; though, an analytical solution for
 flux is given. With this, the true error can be computed, as opposed to a statistical uncertainty which is typically reported.
 The heat conduction, however, relies on MOOSE's iterative FEM solver. The convergence criteria for heat conduction is given by
+
 \begin{lstlisting}
   nl_abs_tol = 1e-7
   nl_rel_tol = 1e-9
   petsc_options_iname = '-pc_type -pc_hypre_type'
   petsc_options_value = 'hypre boomeramg'
 \end{lstlisting}
-
 The second type of convergence relates to global iterations, i.e. Picard Iterations. Since this is a steady-state problem being
 run with a transient solver, MOOSE's steady state detection feature was turned on. The steady state tolerance selected was $1e-5$.
 \textbf{explain how the SS tolerance works i.e. L2 norm. Discuss what was included}. This led to increasing number of iterations
 to achieve steady state as the mesh refined. Below is a figure showing this relationship.
 
-% \begin{figure}[H]
-%     \centering
-%     \includegraphics{}
-%     \caption{Caption}
-%     \label{fig:my_label}
-% \end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{figures/its_to_ss.png}
+    \caption{This plot shows the iterations required for \gls{moose} to detect steady state for each mesh size with log scale.}
+    \label{fig:its_to_ss}
+\end{figure}
 
 \section{RESULTS}\label{sec:results}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{figures/temp_50.png}
+    \caption{This plot shows the computed temperature for 50 mesh elements.}
+    \label{fig:temp50}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{figures/error_study.png}
+    \caption{This plot shows log of the number of mesh elements vs the log of the $L_{2}$ error norm for the computed vs analytical temperature.}
+    \label{fig:}
+\end{figure}
 \begin{itemize}
-    \item TODO add error plot
-    \item TODO add temperature plot
-    \item TODO add flux for finest mesh size
+    \item TODO add flux C/E compiled figure
 \end{itemize}
 \section{CONCLUSIONS}\label{sec:conclusions}
 
