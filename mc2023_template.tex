@@ -39,8 +39,6 @@
 \usepackage{caption}
 \captionsetup{width=1.0\textwidth,font={bf,normalsize},skip=0.3cm,within=none,justification=centering}
 
-\usepackage[justification=centering]{caption}
-
 % ELIMINATING WHITESPACE
 \setlength{\belowcaptionskip}{-15pt}
 \setlength{\abovedisplayskip}{4pt}
@@ -65,6 +63,7 @@
 \title{Verification of the Cardinal Multiphysics Solver for 1-D Coupled\\
 Heat Transfer and Neutron Transport}
 
+\raggedbottom % TODO this or vfill
 \author{%
   % FIRST AUTHORS
   %
@@ -97,12 +96,13 @@ Heat Transfer and Neutron Transport}
   work by the Naval Nuclear Laboratories. This numerical benchmark includes $S_2$ transport, Doppler-broadened cross-sections,
   thermal conduction and expansion, and convective boundary conditions. The goals of this work are to verify Cardinal's basic
   multiphysics modeling capabilities for coupled neutronics and heat conduction, while serving as a computational ``test bed''
-  for assessing the performance of various multiphysics coupling strategies and algorithms. The key metrics to match from the
-  benchmark are the temperature and flux solutions. Using the analytical solution for temperature, an $L_{2}$ error norm was computed
-  for each mesh size. The error showed linear convergence with a slope of $-0.9979$ on a plot of $log(N)$ vs $log(\epsilon)$,
-  where $N$ is the number of mesh elements and $\epsilon$ is the error norm. The ratio of the computed to analytical flux in
-  each mesh element shows agreement between $0.99725$ and $1.0045$ for all the data points in each mesh. The eigenvalue $k_{eff}$
-  also agreed well with the benchmark's $0.29557$ for each mesh size.
+  for assessing the performance of various multiphysics coupling strategies and algorithms. The key numerical metrics to match
+  from the analytical benchmark are the temperature and flux distributions. Using the analytical solution for temperature, an
+  $L_{2}$ error norm was computed for each mesh size. The error showed linear convergence with a slope of $-0.9979$ on a plot
+  of $log(N)$ vs $log(\epsilon)$, where $N$ is the number of mesh elements and $\epsilon$ is the error norm. The ratio of the
+  computed to analytical flux in each mesh element shows agreement between $0.997$ and $1.004$ for all the data points in
+  each mesh. The eigenvalue $k_{eff}$ also agreed well with the benchmark's $0.29557$ for each mesh size. These results increase
+  confidence in the fidelity of Cardinal's multi-physics modeling capabilities.
 \end{abstract}
 \vspace{6pt}
 \keywords{Cardinal, MOOSE, OpenMC, multiphysics, verification}
@@ -149,12 +149,11 @@ equations and boundary conditions in the 1-D slab is shown in Fig. \ref{fig:slab
     \label{fig:slab_diagram}
 \end{figure}
 
-This benchmark uses a one-group assumption for the neutron cross-sections. As neutrons transport, fission events deposit volumetric
-power in the form of heat in the slab, causing thermal expansion and affecting the temperature distribution. In this benchmark,
-thermal expansion is restricted to only the $x$-direction. This slab elongation feeds back neutronics and heat conduction by
-influencing the domain length and material density. The slab has convective boundary conditions at the endpoints $x=\pm \frac{L}{2}$
-with the heat sink temperature $T_{0}$. The Doppler-broadened total microscopic cross-section follows an inverse-root temperature
-relationship,
+This benchmark uses a one-group assumption for the neutron cross-sections. As neutrons transport, heat from fission events deposit
+volumetric power in the slab, causing thermal expansion and affecting the temperature distribution. In this benchmark, thermal
+expansion is restricted to only the $x$-direction. This slab elongation feeds back neutronics and heat conduction by influencing
+the domain length and material density. The slab has convective boundary conditions at the endpoints $x=\pm \frac{L}{2}$ with the
+heat sink temperature $T_{0}$. The Doppler-broadened total microscopic cross-section follows an inverse-root temperature relationship,
 \begin{equation}
     \sigma_{t}(T) = \sigma_{t,0}\sqrt{\frac{T_{0}}{T(x)}}
 \end{equation}
@@ -178,25 +177,29 @@ are of the same solution type. The matching of coefficients imposes two constrai
 cross-section $\sigma_{t,0}$ and the heat transfer coefficient $h$ in terms of the slab parameters. These are two key parameters
 required as inputs for the simulation. For full details on the analytical solution's derivation, see \cite{analytical_benchmark}.
 
-
 \section{COMPUTATIONAL MODEL}
 \label{sec:model}
 This section describes the OpenMC and \gls{moose} computational models, followed by the convergence criteria used for coupling.
-Note that Cardinal currently does not yet support moving geometries in OpenMC. Instead, the simulation uses the formula for
-equilibrium length $L$ from \cite{analytical_benchmark} that accounts for all three physics effects. The change in density due
-to temperature is accounted for by using the total macroscopic cross-section\ --\ which has a density factor\ --\ from
-(\ref{sec:intro:doppler}), as was mentioned in Section \ref{sec:benchmark}.
+Note that Cardinal currently does not yet support moving geometries in OpenMC. Instead of using thermo-mechanics for thermal
+expansion, the simulation uses the formula for equilibrium length $L$ from \cite{analytical_benchmark} that accounts for all
+three physics effects. The change in density due to temperature is accounted for in this simulation by using the total macroscopic
+cross-section\ --\ which absorbs density to become a $\frac{1}{T}$ dependence\ --\ from (\ref{sec:intro:doppler}), as was
+mentioned in Section \ref{sec:benchmark}.
 
 \subsection{OpenMC Model}
 The geometry used in OpenMC must be finite, despite the benchmark being infinite in the $y$ and $z$ directions. In general,
 reflective boundary conditions can be used to simulate infinite dimensions. Thus, this benchmark can be represented with
-vacuum boundary conditions at $x=\pm \frac{L}{2}$ and reflective boundary conditions at the $y$ and $z$ boundaries. Fig.
-\ref{fig:slab_diagram} showed a diagram of the geometry, governing equations, and boundary conditions for the different physics.
+vacuum boundary conditions at $x=\pm \frac{L}{2}$ and reflective boundary conditions at the $y$ and $z$ boundaries. Note that
+particles only move in the $\pm x$ direction, so no $y$ or $z$ boundaries could be crossed, but with different scattering than
+$S_{2}$, the reflective boundaries would come into play. Additionally, the $y$ and $z$ dimensions need to be set to $1$
+in order for Equation (19) from the benchmark to uphold its one dimensional power integral, i.e. integration in $y$ and $z$ is
+implied to contribute a factor of 1. \cite{analytical_benchmark} Fig. \ref{fig:slab_diagram} shows a diagram of the $1D$ geometry,
+governing equations, and boundary conditions for the different physics.
 
 The benchmark's one-group assumption was satisfied using OpenMC's multigroup mode, as opposed to typical continuous energy
 transport. OpenMC allows user-defined cross-sections with the \texttt{XSdata} class. The cross-section for each reaction was
-specified at an array of temperatures and was exported to a library allowing a look-up or interpolation to determine the
-cross-section in each region as temperature changes during iteration.
+specified at an array of temperatures and was exported to a library allowing a look-up to determine the cross-section in each
+region as temperature changes from iteration to iteration.
 
 The OpenMC model required slight source code modifications to accommodate $S_2$-like transport. In typical OpenMC simulations,
 the physics of each reaction describes the scattering dynamics. The Monte Carlo algorithm is agnostic to the direction
@@ -249,29 +252,54 @@ to achieve steady state as the mesh refined. Below is a figure showing this rela
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\linewidth]{figures/its_to_ss.png}
+    \includegraphics[width=0.5\linewidth]{figures/its_to_ss.png}
     \caption{This plot shows the iterations required for \gls{moose} to detect steady state for each mesh size with log scale.}
     \label{fig:its_to_ss}
 \end{figure}
 
 \section{RESULTS}\label{sec:results}
-
+The main results to compare with the benchmark are the temperature distribution, flux distribution, and eigenvalue. The benchmark provides
+analytical solutions for all of these quantities An example distribution is shown in the figure below for the 50 mesh element case.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\linewidth]{figures/temp_50.png}
+    \includegraphics[width=0.45\linewidth]{figures/temp_50.png}
     \caption{This plot shows the computed temperature for 50 mesh elements.}
     \label{fig:temp50}
 \end{figure}
-
+In order to assess the accuracy of the temperature solution and verify that refining the mesh increases the accuracy, the analytical solution
+was used to compute an $L_{2}$ error norm for temperature. The error computed, $\epsilon$, is given by
+\begin{equation}
+    \epsilon = \frac{|| T_{a} - T_{x} ||_{2}}{|| T_{a} ||_{2}},
+\end{equation}
+where $T_{a}$ is the analytical solution evaluated at the x-centroid of the mesh element and $T_{x}$ is the temperature computed for that
+voxel from the multiphysics simulation. The figure below shows how this error relates to the number of mesh elements
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\linewidth]{figures/error_study.png}
+    \includegraphics[width=0.55\linewidth]{figures/error_study.png}
     \caption{This plot shows log of the number of mesh elements vs the log of the $L_{2}$ error norm for the computed vs analytical temperature.}
-    \label{fig:}
+    \label{fig:error_study}
 \end{figure}
-\begin{itemize}
-    \item TODO add flux C/E compiled figure
-\end{itemize}
+Linear convergence is achieved, as the slope of the line on the $\log(N)$ vs $\log(\epsilon)$ plot is $-0.99768235$.
+\textbf{TODO should I mention deviation from} \href{https://mooseframework.inl.gov/getting_started/examples_and_tutorials/tutorial03_verification/step02_fem_convergence.html}{FEM moose}? Probably due to MC?
+\textbf{TODO compute flux error norm like temp}
+Lastly, the eigenvalue for each mesh is reported in the table below.
+
+\begin{table}[H]
+    \centering
+    \caption{Eigenvalue with uncertainty for each mesh size.}
+    \begin{tabular}{c|c}
+        \textbf{mesh elements} & $k_{eff}$ \\
+        \hline
+        50 & 0.29550 $\pm$ 0.00012 \\
+        100 & 0.29545 $\pm$ 0.00014 \\
+        250 & 0.29585  $\pm$ 0.00011 \\
+        500 & 0.29567 $\pm$ 0.00011 \\
+        1000 & 0.29561 $\pm$ 0.00012
+    \end{tabular}
+    \label{tab:data}
+\end{table}
+
+
 \section{CONCLUSIONS}\label{sec:conclusions}
 
 \begin{itemize}
