@@ -15,3 +15,7 @@ neutronics-thermal-fluid
 Cass
 Robbins-Monro
 XSdata
+thermo-mechanics
+PolarAzimuthal
+HeatConductionMaterial
+petsc
