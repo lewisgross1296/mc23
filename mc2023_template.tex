@@ -63,7 +63,7 @@
 \title{Verification of the Cardinal Multiphysics Solver for 1-D Coupled\\
 Heat Transfer and Neutron Transport}
 
-\raggedbottom % TODO this or vfill
+\raggedbottom % bottom of page alignment
 \author{%
   % FIRST AUTHORS
   %
@@ -98,13 +98,12 @@ Heat Transfer and Neutron Transport}
   multiphysics modeling capabilities for coupled neutronics and heat conduction, while serving as a computational ``test bed''
   for assessing the performance of various multiphysics coupling strategies and algorithms. The key numerical metrics to match
   from the analytical benchmark are the temperature and flux distributions, as well as the eigenvalue. Using the analytical
-  solution for temperature, an $L_{2}$ error norm was computed for each mesh size.
+  solution for temperature and flux, an $L_{2}$ error norm was computed for each mesh size. \textbf{INSERT CONVERGENCE ONCE DECISION MADE ABOUT LAST FLUX}
   % The error showed linear convergence with a slope of $-0.9979$ on a plot of $log(N)$ vs $log(\epsilon)$, where $N$ is the number of mesh elements and $\epsilon$ is the error norm.
-  The ratio of the \gls{ce} temperature and flux in each mesh element shows agreement.  The temperature \gls{ce} was between
-  \textbf{insert bounds} and the flux \gls{ce} was between \textbf{insert bounds}. Both plots show that with increasing mesh elements, the \gls{ce}
-  approaches the ideal $y=1$. The eigenvalue $k_{eff}$ also agreed well with the benchmark's $0.29557$ for each mesh size.
-  These correct computation of these key metrics demonstrates confidence in the fidelity of Cardinal's multi-physics modeling
-  capabilities.
+  The ratio of the \gls{ce} temperature and flux in each mesh element shows agreement as the \gls{ce} for each mesh approaches
+  the ideal $y=1$ as the mesh size increases. Both plots show that with increasing mesh elements, the \gls{ce} approaches the
+  ideal $y=1$. The eigenvalue $k_{eff}$ also agreed well with the benchmark's $0.29557$ for each mesh size. These correct
+  computation of these key metrics demonstrates confidence in the fidelity of Cardinal's multiphysics modeling capabilities. \textbf{TODO COMMENT ON FLUX.}
 \end{abstract}
 \vspace{6pt}
 \keywords{Cardinal, MOOSE, OpenMC, multiphysics, verification}
@@ -195,15 +194,15 @@ reflective boundary conditions can be used to simulate infinite dimensions. Thus
 vacuum boundary conditions at $x=\pm \frac{L}{2}$ and reflective boundary conditions at the $y$ and $z$ boundaries. Note that
 particles only move in the $\pm x$ direction, so no $y$ or $z$ boundaries are crossed, but with non-$S_{2}$ scattering, the
 reflective boundaries would come into play. In addition to being finite for the model, the $y$ and $z$ dimensions need to be
-set to $1$ in order for Equation (19) from the benchmark to uphold its one dimensional power integral, i.e. integration in
+set to $1$ cm in order for Equation (19) from the benchmark to uphold its one dimensional power integral, i.e. that integration in
 $y$ and $z$ is implied to contribute a factor of 1. \cite{analytical_benchmark} Fig. \ref{fig:slab_diagram} shows a diagram
 of the $1D$ geometry, governing equations, and boundary conditions for the different physics.
 
 The benchmark's one-group assumption was satisfied using OpenMC's multigroup mode. Since the benchmark uses a fictitious material
 with a known function for the temperature dependence, the simulation took advantage of OpenMC's capability for user-defined
 cross-sections via the \texttt{XSdata} class. The cross-section for each reaction was specified for 50 evenly spaced temperatures
-between 308 K and 358 K and was exported to a library that Cardinal used to determine the appropriate cross-section in each region
-as temperature changed from iteration to iteration.
+between 308 K and 358 K and was exported to a library that OpenMC used to determine the appropriate cross-section in each region
+as temperature changed via input from Cardinal from iteration to iteration.
 
 The OpenMC model required slight source code modifications to accommodate $S_2$-like transport. In typical OpenMC simulations,
 the physics of each reaction describes the scattering dynamics. The Monte Carlo algorithm is agnostic to the direction
@@ -214,111 +213,131 @@ distribution to restrict the birth direction of particles to the $\pm x$ directi
 patched branch to mimic $S_{2}$ transport in two ways. First, when determining the angular cosine of scattering events,
 $\mu$, particles either continue forward ($\mu=1$) or are back-scattered ($\mu=-1$) with equal probability, as opposed to
 sampling the reaction physics for $\mu$. Second, since the simulation uses $k$-eigenvalue mode, neutrons born in subsequent
-generations of the simulation also need to have their angular distributions restricted to $\pm x$.
+generations of the simulation also need to have their angular birth distributions restricted to $\pm x$.
 
 The k-eigenvalue simulation used 50,000 particles per batch, with 50 inactive batches and 50 active batches for every case. A few
 tallies were used in order to compare to the analytical solution: a flux cell tally, a kappa-fission rate cell and global tally,
-a nu-fission rate global tally, and the eigenvalue $k_{eff}$. Though flux and the eigenvalue are the only quantities to compare
-with the benchmark, these other tallies are needed in order to compute a source strength. OpenMC reports flux, denote it $\hat{\phi}$,
-in units of $\frac{n-cm}{sp}$, but typical flux, denote it $\phi$, has units of $\frac{n}{cm^2-s}$. In fixed source modes, the source
-strength is typically known, but in eigenvalue mode, it must be computed, as it depends on the physical source and fission source.
-The following was used to compute the source strength
+and the eigenvalue $k_{eff}$. Though flux and the eigenvalue are the only quantities to compare with the benchmark, these other
+tallies are needed in order to compute a source strength. OpenMC reports flux, denote it $\hat{\phi}$, in units of $\frac{n-cm}{sp}$,
+but typical flux, denote it $\phi$, has units of $\frac{n}{cm^2-s}$. In fixed source modes, the source strength is typically known,
+but in eigenvalue mode, it must be computed, as it depends on the physical source and fission source. The following was used to
+compute the source strength
 \begin{equation} \label{eq:source_strength}
-   ss = \frac{P\nu}{k_{eff} \kappa V_{voxel}} \QTHUS \phi = \frac{P\nu}{k_{eff} \kappa V_{voxel} }\hat{\phi},
+   ss = \frac{P}{\kappa V_{voxel}} \QTHUS \phi = \frac{P}{\kappa V_{voxel} }\hat{\phi},
 \end{equation}
-where $P=1e22 \frac{ev}{s}$ is the slab integrated power from the benchmark, $\nu$ is the tallied nu-fission rate across the slab,
-$\kappa$ is the tallied kappa-fission rate across the slab, and $V_{voxel}$ is the volume of a voxel in the mesh. The same source
-strength could be used to convert the kappa fission tally from OpenMC, which has units of $\frac{ev}{sp}$, to more physically
-meaningful units of $\frac{ev}{cm^3-s}$.
+where $P=1e22 \frac{ev}{s}$ is the slab integrated power from the benchmark, $\kappa$ is the tallied kappa-fission rate across the slab,
+and $V_{voxel}$ is the volume of a voxel in the mesh. The same source strength could be used to convert the kappa-fission tally from
+OpenMC, which has units of $\frac{ev}{sp}$, to more physically meaningful units of $\frac{ev}{cm^3-s}$.
 
 \subsection{MOOSE Heat Conduction Model}
-The \gls{moose} \gls{hcm} is used to solve for conduction within the slab. It solves the conduction equation
+The \gls{moose} \gls{hcm} is used to solve for the temperature distribution within the slab. It solves the conduction equation using the
+\gls{fem} available in \gls{moose}:
 \begin{equation}\label{eq:conduction}
     - \nabla \cdot (k_{s}(\mathbf{r},T_{s}) \nabla T_{s}(\mathbf{r})) = \dot{q}_{s},
 \end{equation}
-using the \gls{fem} available in \gls{moose}. It uses a \texttt{HeatConductionMaterial} to specify that the thermal conductivity
-obeys the benchmark's temperature dependence $\kappa(T)=\kappa_{0}T$. The boundary conditions used by \gls{moose} match temperature
-boundary condition in red shown in Fig (\ref{fig:slab_diagram}). The \gls{hcm} is coupled to OpenMC by receiving the heat source in
-each element from the kappa fission tally. During each constituent iteration, it recomputes the temperature distribution from the heat
-source and boundary conditions, and then sends the temperatures back to OpenMC for the next transport solve.
+where $k_{s}$ is the thermal conductivity in the solid and $\dot{q}_{s}$ is the heat source, in this case from fission. It uses a
+\texttt{HeatConductionMaterial} to specify that the thermal conductivity obeys the benchmark's temperature dependence $\kappa(T)=\kappa_{0}T$.
+The boundary conditions used by \gls{moose} match temperature boundary condition in red shown in Fig (\ref{fig:slab_diagram}). The
+\gls{hcm} is coupled to OpenMC by receiving the heat source in each element from the kappa-fission tally. During each constituent
+iteration, it recomputes the temperature distribution from the heat source and boundary conditions, and then sends the temperatures
+back to OpenMC for the next transport solve.
 
 \subsection{Convergence Criteria}
-Monte Carlo is not an iterative method, so convergence is achieved by using an appropriate number of histories per batch and batches. The
-configurations used here were mentioned in \ref{sec:model:OpenMC}. The \gls{hcm} does use iterative methods with convergence criteria of
- $1e-7$ for absolute tolerance and $1e-9$ for relative tolerance. It uses a combination of non-linear and linear iterations to update the
- solution and stops once both of the convergence criteria are met. The following petsc options were included:
- \texttt{petsc$\_$options$\_$iname='-pc$\_$type -pc$\_$hypre$\_$type'} and \texttt{petsc$\_$options$\_$value='hypre boomeramg'}. Additionally, Robbins-Monro
-relaxation was used on the kappa-fission tally.
+The \gls{hcm} uses iterative methods to compute temperature. It uses a combination of linear and non-linear iterations to update the
+solution, stopping once both of the convergence criteria are met. This study used convergence criteria of $10^{-7}$ for absolute tolerance
+and $10^{-9}$ for relative tolerance.  The following petsc options were included:
+\begin{lstlisting}
+    petsc_options_iname=`-pc_type -pc_hypre_type'
+    petsc_options_value=`hypre boomeramg'
+\end{lstlisting}
+Monte Carlo is not an iterative method, so convergence is achieved by using an
+appropriate number of batches and histories per batch. The configurations used here were mentioned in Section \ref{sec:model:OpenMC}.
 
-In terms of convergence of global iterations, an appropriate number of Picard Iterations were required. The cases with 50, 100, and 250
-mesh elements used 200 Picard Iteration. Originally, the 500 and 1000 mesh element cases were intended to use the same, but 200 Picard
-Iterations were not enough to converge the flux. Instead, a simulation with 400 Picard Iterations were used for these larger meshes. The
-smaller mesh cases could also have been run with more Picard Iterations, but since they were already converged, the results were not expected
-to change with more iterations. In order to assess the convergence, plots of error versus mesh element size were used and will be shown
-in \ref{sec:results}.
+In terms of converging global iterations across all single physics, each mesh cases used 200 Picard Iterations. To assist with
+convergence of Monte Carlo quantities, Robbins-Monro relaxation was applied to the flux and kappa-fission tallies. This updates the
+quantities of interest for the $n+1$th iteration as an average over the newest solution and the $n$ previous iterations. \cite{omccap}
+So the flux at Picard Iteration $n+1$ would be given by
+\begin{equation}\label{eq:Robbins-Monro}
+    \phi_{n+1} = \frac{1}{n+1} \sum_{i=0}^{n} \phi_{i},
+\end{equation}
+where $\phi_{i}$ is the flux output from the $i$th Monte Carlo solve. In order to assess the convergence of each physics, plots of
+error versus mesh element size were used and will be shown in Section \ref{sec:results}.
 
 \section{RESULTS}\label{sec:results}
-The main results to compare with the benchmark are the temperature distribution, flux distribution, and eigenvalue. The benchmark provides
-analytical solutions for all of these quantities An example distribution is shown in the figure below for the 50 mesh element case.
-\begin{figure}
+The results to compare with the benchmark are the temperature distribution, flux distribution, and eigenvalue. The benchmark provides
+analytical solutions for all of these quantities. An example temperature distribution is shown in the figure below for the 50 mesh element case.
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.55\linewidth]{figures/temp_50.png}
     \caption{This plot shows the computed temperature for 50 mesh elements.}
     \label{fig:temp50}
 \end{figure}
 In order to assess the accuracy of the temperature solution and verify that refining the mesh increases the accuracy, the analytical solution
-was used to compute an $L_{2}$ error norm for temperature. The error computed, $\epsilon$, is given by
+was used to compute an $L_{2}$ error norm for temperature. The error computed, $\epsilon_{T}$, is given by
 \begin{equation}
-    \epsilon = \frac{|| T_{a} - T_{x} ||_{2}}{|| T_{a} ||_{2}},
+    \epsilon_{T} = \frac{|| T_{a} - T_{x} ||_{2}}{|| T_{a} ||_{2}},
 \end{equation}
 where $T_{a}$ is the analytical solution evaluated at the x-centroid of the mesh element and $T_{x}$ is the temperature computed for that
-voxel from the multiphysics simulation. The figure below shows how this error relates to the number of mesh elements
+voxel from the multiphysics simulation. The figure below shows how the temperature error relates to the number of mesh elements
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.55\linewidth]{figures/error_study.png}
+    \includegraphics[width=0.45\linewidth]{figures/temp_error_norms.png}
     \caption{This plot shows log of the number of mesh elements vs the log of the $L_{2}$ error norm for the computed vs analytical temperature.}
-    \label{fig:error_study}
+    \label{fig:temp_error_study}
 \end{figure}
-Linear convergence is achieved, as the slope of the line on the $\log(N)$ vs $\log(\epsilon)$ plot is $-0.99794316$. Another
-measure of comparison is the \gls{ce} for each mesh size. The ideal would be exact equality, or a ratio of $1$. The temperature
-\glspl{ce} are shown in the figure below
+Linear convergence is achieved, as the slope of the line on the $\log(N)$ vs $\log(\epsilon_{T})$ plot is $-0.99924828$. The same convergence test
+was used on the flux solution as well with the flux error norm, $\epsilon_{\phi}$, defined as
+\begin{equation}
+    \epsilon_{\phi} =  \frac{|| \phi_{a} - \phi_{x} ||_{2}}{|| \phi_{a} ||_{2}}.
+\end{equation}
+The figure below shows how the flux error relates to the number of mesh elements
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.6\linewidth]{figures/temp_num_to_analy_ratios.png}
-    \caption{These show convergence to the correct temperature solution increases as the number of mesh elements increases.}
-    \label{fig:temp_ce}
+    \includegraphics[width=0.45\linewidth]{figures/flux_error_norms.png}
+    \caption{This plot shows log of the number of mesh elements vs the log of the $L_{2}$ error norm for the computed vs analytical flux.}
+    \label{fig:flux_error_study}
 \end{figure}
-
-\textbf{TODO flux}
-
-Lastly, the eigenvalue for each mesh is reported in the table below. \textbf{TODO update and get the newest ones}
-
+[CONVERGENCE] , as the slope of the line on the $\log(N)$ vs $\log(\epsilon_{\phi})$ plot is \textbf{TODO SLIGHT PROBLEM W FLUX LAST BIN CONVERGENCE}.
+Another measure of comparison is the \gls{ce} for each mesh size. The ideal would be exact equality, or a ratio of $1$. The temperature
+and flux \glspl{ce} are shown in the figure below.
+\begin{figure}[H]
+    \centering
+    \begin{minipage}[b]{0.48\linewidth}
+        \includegraphics[width=\linewidth]{figures/temp_num_to_analy_ratios.png}
+    \end{minipage}
+    \begin{minipage}[b]{0.48\linewidth}
+        \includegraphics[width=\linewidth]{figures/flux_num_to_analy_ratios.png}
+    \end{minipage}
+\end{figure}
+Lastly, the eigenvalue for each mesh is reported in the table below.
 \begin{table}[H]
     \centering
-    \caption{Eigenvalue with uncertainty for each mesh size.}
-    \begin{tabular}{c|c}
-        \textbf{mesh elements} & $k_{eff}$ \\
+    \caption{Eigenvalue with uncertainty for each mesh size. TODO update and get the newest ones}
+    \begin{tabular}{c|c|c}
+        \textbf{mesh elements} & $k_{eff}$ & pcm diff \\
         \hline
-        50 & 0.29550 $\pm$ 0.00012 \\
-        100 & 0.29545 $\pm$ 0.00014 \\
-        250 & 0.29585  $\pm$ 0.00011 \\
-        500 & 0.29567 $\pm$ 0.00011 \\
-        1000 & 0.29561 $\pm$ 0.00012
+        50 & 0.29555 $\pm$ 0.00009 & 9 \\
+        100 & 0.29551 $\pm$ 0.00011 & 6 \\
+        250 & 0.29585  $\pm$ 0.00012 &  -28 \\
+        500 & 0.29574 $\pm$ 0.00013 & -17 \\
+        1000 & 0.29551 $\pm$ 0.00013 & 6
     \end{tabular}
     \label{tab:data}
 \end{table}
 
-
 \section{CONCLUSIONS}\label{sec:conclusions}
 
-\begin{itemize}
-    \item TODO comment on error trend.
-    \item TODO comment on temperature and flux distributions matching well.
-\end{itemize}
+Overall, the numerical results show strong agreement with the analytical solutions. The convergence is first order for the temperature
+and \textbf{flux}.The stochastic nature of the Monte Carlo algorithm is likely a factor for the convergence of the flux. Since zeroth
+order shape functions are used in the \gls{fem}, the first order temperature spatial convergence is to be expected. \cite{moose-convergence}
+The \gls{ce} plots also show expected behavior. As the mesh fineness increases, the computed to expected ratio gets closer and closer to
+the ideal $y=1$. The eigenvalue agrees very well for all cases and appears to be independent of the mesh size.
 
+While code to code benchmarking is common in for nuclear \gls{ms}, agreement with analytical benchmarks greatly increases the confidence
+in Cardinal's multiphysics coupling. Though typical industry-grade simulations would not run $S_{2}$ transport, this modification allows
+Cardinal to show it can match against theoretical expectations.
 
-\section{CONCLUSIONS}
-
+\textit{future work to mention?}
 
 \section*{NOMENCLATURE}
 
