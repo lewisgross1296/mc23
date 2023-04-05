@@ -169,9 +169,9 @@ This gives a Doppler-broadened, macroscopic, total cross-section that accounts f
 \end{equation}
 where $ \sigma_{t,0}$ is the total, microscopic cross-section at $T_{0}$, $N_{A}$ is Avogadro's number, and $A$ is the mass number
 of the medium. The conduction equation governs heat flow in the slab and can be described in terms of the thermal conductivity
-$\kappa\big(T(x)\big)$, the energy released per reaction $q$, the total, macroscopic cross-section $\Sigma_{t}$, and the neutron flux $\phi$.
+$\kappa[T(x)]$, the energy released per reaction $q$, the total, macroscopic cross-section $\Sigma_{t}$, and the neutron flux $\phi$.
 \begin{equation}
-     \frac{d}{dx}\bigg[\kappa\big(T(x)\big)\frac{dT(x)}{dx}\bigg] + q \Sigma_{t}(x)\phi(x) = 0.
+     \frac{d}{dx}\bigg[\kappa[T(x)]\frac{dT(x)}{dx}\bigg] + q \Sigma_{t}(x)\phi(x) = 0.
 \end{equation}
 Note that typically $q$ represents the energy per fission, but in this benchmark, it is per total reaction. The main assumption
 used to craft the analytical solution is that $T(x)=f\phi(x)$. This assumption is guaranteed by manipulating the \glspl{ode},
@@ -180,17 +180,16 @@ The matching of coefficients imposes two constraints that give equations for the
 and the heat transfer coefficient $h$, in terms of the slab parameters. For full details on the analytical solution's derivation,
 see \cite{analytical-benchmark}.
 
-\section{COMPUTATIONAL MODEL}
-\label{sec:model}
-This section describes the OpenMC and \gls{moose} computational models, followed by the convergence criteria used for coupling.
-At the time at which this benchmark modeling was performed, Cardinal did not support moving geometries in OpenMC. Instead of
-using thermomechanics for thermal expansion, our simulation simply uses the analytic solution for the equilibrium length $L$
-from \cite{analytical-benchmark} that accounts for all three physics effects. The change in density due to temperature is
-accounted for in this simulation by using the total, macroscopic cross-section\ --\ which absorbs density to become a
-$\frac{1}{T}$ dependence\ --\ from (\ref{sec:intro:doppler}), as was mentioned in Section \ref{sec:benchmark}. We note that,
-in a companion paper in this conference \cite{novak-2023}, that Cardinal now supports mesh-based geometry (and deforming-mesh
-problems) through the DAGMC plugin, and hence incorporating the thermomechanics feedback will be included in our future work.
-
+\section{COMPUTATIONAL MODEL}\label{sec:model}
+This section describes the OpenMC and \gls{moose} computational models, followed by the convergence criteria used for coupling 
+and a description of the mapping between OpenMC and \gls{moose} geometries. At the time at which this benchmark modeling was
+performed, Cardinal did not support moving geometries in OpenMC. Instead of using thermomechanics for thermal expansion, our
+simulation simply uses the analytic solution for the equilibrium length $L$ from \cite{analytical-benchmark} that accounts for
+all three physics effects. The change in density due to temperature is accounted for in this simulation by using the total,
+macroscopic cross-section\ --\ which absorbs density to become a $\frac{1}{T}$ dependence\ --\ from (\ref{sec:intro:doppler}),
+as was mentioned in Section \ref{sec:benchmark}. We note that, in a companion paper in this conference \cite{novak-2023}, that
+Cardinal now supports mesh-based geometry (and deforming-mesh problems) through the DAGMC plugin, and hence incorporating the
+thermomechanics feedback will be included in our future work.
 
 \subsection{OpenMC Model}
 \label{sec:model:OpenMC}
@@ -239,7 +238,7 @@ and 50 active batches for every case.
 
 A few tallies were used in order to compare to the analytical solution: a flux cell tally, a kappa-fission rate cell and global tally,
 and the eigenvalue $k_{eff}$. Each tally uses a track-length estimator. As particles transport, their path may stay inside a given cell
-or span more cells. The track-length estimator contributes a tally score when individual particle tracks passs through a region. Though
+or span more cells. The track-length estimator contributes a tally score when individual particle tracks pass through a region. Though
 flux and the eigenvalue are the only quantities to compare with the benchmark, these other tallies are needed in order to compute a
 source strength. OpenMC reports flux, denoted as $\hat{\phi}$, in units of $\frac{n-cm}{sp}$, where $sp$ indicates ``source particle.''
 Typical flux, denoted as $\phi$, has units of $\frac{n}{cm^2-s}$. In fixed source modes, the source strength is typically known, but in
@@ -257,7 +256,7 @@ model, a mesh is used that has identical dimensions to the cells used in the Ope
 it allows for 1-to-1 feedback between the temperature computed in \gls{moose} and the heat source computed in OpenMC. \gls{moose}
 solves the conduction equation using the \gls{fem}:
 \begin{equation}\label{eq:conduction}
-    - \nabla \cdot (\kappa_{s}(\mathbf{r},T_{s}) \nabla T_{s}(\mathbf{r})) = \dot{q}_{s},
+    - \nabla \cdot [\kappa_{s}(\mathbf{r},T_{s}) \nabla T_{s}(\mathbf{r})] = \dot{q}_{s},
 \end{equation}
 where $\kappa_{s}$ is the thermal conductivity in the solid and $\dot{q}_{s}$ is the heat source, in this case from fission. The
 boundary conditions used by \gls{moose} match temperature boundary condition in red shown in Fig (\ref{fig:slab_diagram}). \gls{moose}
@@ -288,6 +287,35 @@ will iterate until the solution norm changes by less than this tolerance. In thi
 in order to ensure convergence, but other modelers may not want to incur the computational cost of running 200 Picard Iterations. They can
 use steady-state detection instead.
 
+\subsection{Data Mapping}
+One feature of Cardinal is that it does not require the geometry models used in each single-physics sub-application to exactly match the 
+others. This flexibility is a great asset, but it requires the modeler to choose an appropriate geometry model so that the coupling of
+solution fields can resolve the physics feedback effects. At the beginning of every Cardinal simulation, a mapping between \gls{moose}'s mesh
+and other geometry representations is established. For a \gls{moose}-OpenMC coupling, the centroid of every mesh element is mapped to
+a corresponding OpenMC region, which could either be a cell or a mesh element; here cells are used. Cardinal then creates a tally for every
+requested type in the input file in each of the regions of OpenMC that a \gls{moose} centroid falls in. This mapping is used for transferring
+relevant quantities back and forth between iterations. If the modeler is not careful, this mapping may not be meaningful, as important OpenMC
+regions may not get a tally to participate in feedback, or too many \gls{moose} regions could be linked to the same OpenMC region. For this
+simulation, the \gls{moose} geometry and OpenMC geometries were intentionally created to have the same dimensions so that the mapping is 
+1-to-1. Each region in the \texttt{MooseMesh} computes a temperature and sends it to a geometrically identical OpenMC region. This same
+region in an OpenMC solve computes a heat source via kappa-fission tally and sends it back to \gls{moose} for the next conduction solve.
+A table below shows the configurations of each case in terms of \gls{moose} mesh elements and OpenMC cells.
+\begin{table}[b]
+    \centering
+    \caption{Simulation geometry configurations.}
+    \begin{tabular}{@{}cc@{}}
+        \toprule
+            Number of \gls{moose} Mesh Elements & Number of OpenMC Cells \\
+        \midrule
+            50 & 50 \\
+            100 & 100 \\
+            250 & 250 \\
+            500 & 500 \\ 
+            1000 & 1000 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
 \section{RESULTS}\label{sec:results}
 The results to compare with the benchmark are the temperature distribution, flux distribution, and $k$-eigenvalue. The benchmark provides
 analytical solutions for all of these quantities. An example temperature distribution is shown in the figure below for the 50 mesh element case.
@@ -306,7 +334,7 @@ where $T_{a}$ is the analytical solution evaluated at the $x$-centroid of each m
 voxel from the multiphysics simulation. The figure below shows how the temperature error norm relates to the number of mesh elements
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.65\linewidth]{figures/temp_error_norms.png}
+    \includegraphics[width=0.55\linewidth]{figures/temp_error_norms.png}
     \caption{The number of mesh elements vs the log of the $L_{2}$ error norm for the computed vs analytical temperature.}
     \label{fig:temp_error_study}
 \end{figure}
@@ -318,7 +346,7 @@ was used on the flux solution as well. The flux error norm, $\epsilon_{\phi}$, i
 The figure below shows how the flux error norm relates to the number of mesh elements
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.65\linewidth]{figures/flux_error_norms.png}
+    \includegraphics[width=0.55\linewidth]{figures/flux_error_norms.png}
     \caption{The number of mesh elements vs the log of the $L_{2}$ error norm for the computed vs analytical flux.}
     \label{fig:flux_error_study}
 \end{figure}
@@ -377,11 +405,11 @@ but the analytical eigenvalue is only 5 pcm above the upper bound of the 13 pcm 
 \section{CONCLUSIONS}\label{sec:conclusions}
 
 Overall, the numerical results show agreement with the analytical solutions. The convergence is first order for the temperature, and the flux shows
-neat first order convergence, baring the $N=1000$ case. Since zeroth order shape functions are used for temperature in the \gls{fem}, the first order
+near first order convergence, baring the $N=1000$ case. Since zeroth order shape functions are used for temperature in the \gls{fem}, the first order
 temperature spatial convergence is to be expected \cite{moose-convergence}. The \gls{ce} approach closer and closer to $y=1$ as $N$ increases in
 each case. The eigenvalue agrees very well for all cases.
 
-While code to code benchmarking is common in for nuclear \gls{ms}, agreement with analytical benchmarks greatly increases the confidence in Cardinal's
+While code to code benchmarking is common in for nuclear \gls{ms}, agreement with analytical benchmarks increases the confidence in Cardinal's
 multiphysics coupling. Though typical industry-grade simulations would not run $S_{2}$ transport, this modification allows Cardinal to show it can
 match against theoretical problems as well. Another study with Cardinal \cite{novak-2023}, coupled OpenMC Monte Carlo transport to NekRS heat conduction.
 In principle, this benchmark could also use that coupling, and it will be future work to validate this OpenMC-\gls{moose} coupling to a study matching
