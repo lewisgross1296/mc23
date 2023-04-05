@@ -1,4 +1,4 @@
-@conference{analytical_benchmark,
+@conference{analytical-benchmark,
 	Address = {Pittsburgh, Pennsylvania.},
 	Title = {Analytical {Benchmark} {Solution} for 1-{D} {Neutron} {Transport} coupled with {Thermal} {Conduction} and {Material} {Expansion}.},
 	Author = {David P. Griesheimer and Gabriel Kooreman},
@@ -6,38 +6,29 @@
 	Year = {2022},
 	Pages = {10}}
 
-@article{novak2022_cardinal,
-   author = {A.J. Novak and D. Andrs and P. Shriwise and J. Fang and H. Yuan and D. Shaver and E. Merzari and P.K. Romano and R.C. Martineau},
-    title = {{Coupled {Monte} {Carlo} and Thermal-Fluid Modeling of High Temperature Gas Reactors Using {Cardinal}}},
-  journal = {Annals of Nuclear Energy},
-     year = 2022,
-   volume = 177,
-    pages = {109310},
-      DOI = {10.1016/j.anucene.2022.109310},
+@inproceedings{brown-entropy-2006,
+	address = {Vancouver},
+	title = {On the {Use} of {Shannon} {Entropy} of the {Fission} {Distribution} for  {Assessing} {Convergence} of {Monte} {Carlo} {Criticality} {Calculations}},
+	language = {en},
+	author = {Brown, F B},
+	year = {2006},
+	pages = {6}
 }
 
-@online{omccap,
-   author = {A.J. Novak and P. Shriwise },
-   title = {OpenMCCellAverageProblem },
-   url = {https://cardinal.cels.anl.gov/source/problems/OpenMCCellAverageProblem.html},
-   urldate = {March 31, 2023}
+@Misc{cardinal-website,
+  title        = {{Cardinal: An Open-Source Coupling of {NekRS} and {OpenMC} to {MOOSE}}},
+  year         = 2022,
+  howpublished = {\url{https://cardinal.cels.anl.gov}},
 }
 
-@online{moose-convergence,
-   author = {INL},
-   title = {FEM Convergence},
-   url = {https://mooseframework.inl.gov/getting_started/examples_and_tutorials/tutorial03_verification/step02_fem_convergence.html},
-   urldate = {March 31, 2023}
-}
-
-@article{openmc,
-   author = {P.K. Romano and N.E. Horelik and B.R. Herman and A.G. Nelson and B. Forget and K. Smith},
-    title = {{OpenMC: A State-of-the-Art {Monte} {Carlo} Code for Research and Development}},
-  journal = {Annals of Nuclear Energy},
-     year = 2015,
-   volume = 82,
-    pages = {90--97},
-      DOI = {10.1016/j.anucene.2014.07.048},
+@Article{dufek,
+  author     = {J. Dufek and W. Gudowski},
+  title      = {{Stochastic Approximation for {Monte} {Carlo} Calculation of Steady-State Conditions in Thermal Reactors}},
+  journal    = {Nuclear Science and Engineering},
+  year       = 2006,
+  volume     = 152,
+       pages = {274-283},
+      DOI = {10.13182/NSE06-2}
 }
 
 @article{lindsay2022moose,
@@ -60,6 +51,13 @@
 keywords = {Multiphysics, Object-oriented, Finite-element, Framework},
 }
 
+@online{moose-convergence,
+   author = {INL},
+   title = {FEM Convergence},
+   url = {https://mooseframework.inl.gov/getting_started/examples_and_tutorials/tutorial03_verification/step02_fem_convergence.html},
+   urldate = {March 31, 2023}
+}
+
 @misc{nekrs,
    author = {P. Fischer and S. Kerkemeier and M. Min and Y. Lan and M. Phillips and T. Rathnayake and E. Merzari and A. Tomboulides and A. Karakus and N. Chalmers and T. Warburton},
     title = {{NekRS, a GPU-Accelerated Spectral Element Navier-Stokes Solver}},
@@ -68,4 +66,31 @@ archivePrefix = "arXiv",
     month = apr,
      note = {arXiv:2104.05829},
       url = {https://arxiv.org/abs/2104.05829}
+}
+
+@InProceedings{novak-2023,
+      author = {A.J. Novak and H. Brooks and P. Shriwise and A. Hegazy and A. Davis},
+       title = {{Multiphysics Coupling of OpenMC CAD-Based Transport to MOOSE using Cardinal and Aurora}},
+  booktitle  = {{Proceedings of M\&C}},
+  year       = 2023
+}
+
+@article{novak2022_cardinal,
+   author = {A.J. Novak and D. Andrs and P. Shriwise and J. Fang and H. Yuan and D. Shaver and E. Merzari and P.K. Romano and R.C. Martineau},
+    title = {{Coupled {Monte} {Carlo} and Thermal-Fluid Modeling of High Temperature Gas Reactors Using {Cardinal}}},
+  journal = {Annals of Nuclear Energy},
+     year = 2022,
+   volume = 177,
+    pages = {109310},
+      DOI = {10.1016/j.anucene.2022.109310},
+}
+
+@article{openmc,
+   author = {P.K. Romano and N.E. Horelik and B.R. Herman and A.G. Nelson and B. Forget and K. Smith},
+    title = {{OpenMC: A State-of-the-Art {Monte} {Carlo} Code for Research and Development}},
+  journal = {Annals of Nuclear Energy},
+     year = 2015,
+   volume = 82,
+    pages = {90--97},
+      DOI = {10.1016/j.anucene.2014.07.048},
 }

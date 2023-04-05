@@ -1,6 +1,4 @@
-% This file contains custom commands that Lewis invented
-% TODO remove any of these that cause problems
-
+% This file contains custom commands that Lewis uses frequently in LaTeX documents
 
 \usepackage{subfigure}
 \usepackage{hyperref}
@@ -17,7 +15,8 @@
 %vector arrow
 \usepackage{graphicx}
 \newcommand{\cev}[1]{\reflectbox{\ensuremath{\vec{\reflectbox{\ensuremath{#1}}}}}}
-% table adjust size
+% table packages
+\usepackage{booktabs}
 \usepackage{adjustbox}
 
 \newcommand{\QOR}{\qquad \text{OR} \qquad}
@@ -43,6 +42,9 @@
 \def\Angbrac#1{\big\langle#1\big\rangle}
 \def\ANGBRAC#1{\bigg\langle#1\bigg\rangle}
 \usepackage{float}
-
+% SI Units
+\usepackage{siunitx}
+\DeclareSIUnit\n{n}
+\DeclareSIUnit\sp{sp}
 
 \def\doubleunderline#1{\underline{\underline{#1}}}

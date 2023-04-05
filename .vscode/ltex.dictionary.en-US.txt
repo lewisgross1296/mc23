@@ -19,3 +19,6 @@ thermo-mechanics
 PolarAzimuthal
 HeatConductionMaterial
 petsc
+thermomechanics
+DAGMC
+pcm
