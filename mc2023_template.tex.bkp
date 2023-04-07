@@ -97,13 +97,14 @@ Heat Transfer and Neutron Transport}
   multiphysics modeling capabilities for coupled neutronics and heat conduction. The benchmark provides analytical solutions for
   the temperature and flux distributions, as well as the $k$-eigenvalue. Using these solutions, an $L_{2}$ error norm was computed
   for each spatial discretization (finite element heat conduction mesh, Monte Carlo cells). The temperature error showed linear
-  convergence on a log-log plot of mesh element number vs error with a slope of $-0.9982$. The flux error norms did not show an
-  expected convergence, likely due to other errors besides spatial discretization contributing. The ratio of the \gls{ce} for
-  temperature and flux in each mesh element shows agreement. The temperature \gls{ce} approach the ideal $r=1$ closer as each mesh
-  refines. The flux \gls{ce}, which come with uncertainties, show that the ideal $r=1$ is within two standard deviations of the
-  mean \gls{ce}. This shows the correct answer is statistically contained by the numerical results. The eigenvalue $k_{eff}$ agrees
-  well with the benchmark value for each mesh size. The outcome of this work is verification of coupled Monte Carlo-thermal conduction
-  modeling using Cardinal.
+  convergence on a log-log plot of mesh element number vs error with a slope of $-0.9982$. \textit{The flux was near linear convergence,
+  with a slope of  $-0.9496$ on a log-log plot of number of cells vs error, but the higher-than-expected error of the last
+  element deviated from linear behavior.}
+  % The ratio of the \gls{ce} temperature and flux in each mesh element shows agreement as the \gls{ce} for each mesh approaches
+  % the ideal $y=1$ as the mesh size increases. Both plots show that with increasing mesh elements, the \gls{ce} approaches the
+  % ideal $y=1$.
+  The eigenvalue $k_{eff}$ agrees well with the benchmark value for each mesh size. The outcome of this work is verification of coupled
+  Monte Carlo-thermal conduction modeling using Cardinal.
 \end{abstract}
 \vspace{6pt}
 \keywords{Cardinal, MOOSE, OpenMC, multiphysics, verification}
@@ -180,7 +181,7 @@ and the heat transfer coefficient $h$, in terms of the slab parameters. For full
 see \cite{analytical-benchmark}.
 
 \section{COMPUTATIONAL MODEL}\label{sec:model}
-This section describes the OpenMC and \gls{moose} computational models, followed by the convergence criteria used for coupling
+This section describes the OpenMC and \gls{moose} computational models, followed by the convergence criteria used for coupling 
 and a description of the mapping between OpenMC and \gls{moose} geometries. At the time at which this benchmark modeling was
 performed, Cardinal did not support moving geometries in OpenMC. Instead of using thermomechanics for thermal expansion, our
 simulation simply uses the analytic solution for the equilibrium length $L$ from \cite{analytical-benchmark} that accounts for
@@ -196,8 +197,8 @@ The geometry used in OpenMC must be finite, despite the benchmark being infinite
 is divided evenly into $N$ identically shaped rectangular cells along the $x$-dimension; the cases here are $N=[50,100,250,500,1000]$
 cells. In general, reflective boundary conditions can be used to simulate infinite dimensions. Thus, this benchmark can be
 represented with vacuum boundary conditions at $x=\pm \frac{L}{2}$ and reflective boundary conditions at the $y$ and $z$ boundaries.
-The cell boundaries have transmissive boundary conditions, which allows particles to continue along their direction. Note that
-particles only move in the $\pm x$ direction, so no $y$ or $z$ boundaries are crossed, but with non-$S_{2}$ scattering,
+The cell boundaries have transmissive boundary conditions, which just allows particles to pass without modifying their state.
+Note that particles only move in the $\pm x$ direction, so no $y$ or $z$ boundaries are crossed, but with non-$S_{2}$ scattering,
 the reflective boundaries would come into play. In addition to being finite for the model, the $y$ and $z$ dimensions need to be
 set to $1$ cm in order for Equation (19) from the benchmark to uphold its one dimensional power integral, i.e. that integration in
 $y$ and $z$ is implied to contribute a factor of 1 \cite{analytical-benchmark}. Fig. \ref{fig:slab_diagram} shows a diagram
@@ -224,30 +225,28 @@ generations of the simulation also need to have their angular birth distribution
 Due to the stochastic nature of Monte Carlo, an adequate number of histories must be used to obtain estimators that have reasonable
 uncertainties. In eigenvalue mode, there are inactive batches followed by active batches. The difference is that inactive batches run
 the simulation, but do not tally the requested estimators. The only quantity that is tracked is the fission source, which is passed from
-each inactive batch to the next, converging to a more accurate fission source with each batch. The goal is to converge the fission source
-before tallying, as the initial guess may be inaccurate. Thus, the number of inactive batches is an important parameter. Shannon Entropy
-computations can help determine fission source convergence \cite{brown-entropy-2006}. A Shannon Entropy study for this system was conducted
-on the 1000 cell case, as the other case have larger cell sizes. Increasing the cell size with the same number of histories improves
-statistics -- at least until there are  too few cells to capture spatial dependence. This problem's analytical fission source turns out to
-be independent of position, due to the multiplication of cross-section by flux, where the inverse $T$ and $T$ relationships cancel. It is
-safe to assume that if the fission source converges for 1000 cells, it would converge for all cases in $N=[50,100,250,500]$ using the same
-number of histories. It was found the Shannon Entropy converges after about 5 inactive batches. This may seem like a low number, but the
-problem is 1-D and the initial guess provided to OpenMC is a uniform distribution, which is the same shape as the actual converged solution.
-In order to be safe, the $k$-eigenvalue simulation used 50,000 particles per batch, with 50 inactive batches and 50 active batches for every
-case. Once the temperature was converged following 200 Picard Iterations, a final OpenMC run was performed using the temperature distribution
-produced from Picard Iteration with 250,000 particles per batch and the same number of batches.
+each inactive batch to the next. The goal is to converge the fission source before tallying, as the initial guess may be inaccurate.
+Thus, the number of inactive batches is an important parameter. Shannon Entropy computations can help determine fission source convergence
+\cite{brown-entropy-2006}. A Shannon Entropy study for this system was conducted on the 1000 cell case, as increasing the cell size
+improves statistics -- at least until there are too few cells to capture spatial dependence. This problem's analytical fission source
+actually turns out to be independent of position, due to the multiplication of cross-section by flux, where the inverse $T$ and $T$
+relationships cancel, so it is safe to assume that if the fission source converges for 1000 cells, it would converge for all the fewer
+cell cases using the same number of histories. It was found the Shannon Entropy converges in fewer than 5 iterations. This may seem
+like a low number, but the problem is 1-D and the initial guess provided to OpenMC is a uniform distribution, which is the same as the
+actual converged solution. In order to be safe, the $k$-eigenvalue simulation used 50,000 particles per batch, with 50 inactive batches
+and 50 active batches for every case.
 
-Cardinal kept track of a few tallies in order to compare to the analytical solution: a flux cell tally, a kappa-fission rate cell and global
-tally, and the eigenvalue $k_{eff}$. Each tally uses a track-length estimator. As particles transport, their path may stay inside a given cell
+A few tallies were used in order to compare to the analytical solution: a flux cell tally, a kappa-fission rate cell and global tally,
+and the eigenvalue $k_{eff}$. Each tally uses a track-length estimator. As particles transport, their path may stay inside a given cell
 or span more cells. The track-length estimator contributes a tally score when individual particle tracks pass through a region. Though
 flux and the eigenvalue are the only quantities to compare with the benchmark, these other tallies are needed in order to compute a
 source strength. OpenMC reports flux, denoted as $\hat{\phi}$, in units of $\frac{n-cm}{sp}$, where $sp$ indicates ``source particle.''
 Typical flux, denoted as $\phi$, has units of $\frac{n}{cm^2-s}$. In fixed source modes, the source strength is typically known, but in
 eigenvalue mode, it must be computed, as it depends on the physical source and fission source. The source strength is given by
 \begin{equation} \label{eq:source_strength}
-   \text{source strength} = \frac{P}{KF*V_{cell}} \QTHUS \phi = \frac{P}{KF*V_{cell} }\hat{\phi},
+   \text{source strength} = \frac{P}{kf V_{cell}} \QTHUS \phi = \frac{P}{kf V_{cell} }\hat{\phi},
 \end{equation}
-where $P=1e22 \frac{ev}{s}$ is the slab integrated power from the benchmark, $KF$ is the tallied kappa-fission rate across the slab,
+where $P=1e22 \frac{ev}{s}$ is the slab integrated power from the benchmark, $kf$ is the tallied kappa-fission rate across the slab,
 and $V_{cell}$ is the volume the cell containing the tally. The same source strength could be used to convert the kappa-fission tally from
 OpenMC, which has units of $\frac{ev}{sp}$, to more physically meaningful units of $\frac{ev}{cm^3-s}$.
 
@@ -273,7 +272,7 @@ of $10^{-7}$ for absolute tolerance and $10^{-9}$ for relative tolerance. Monte 
 by using an appropriate number of batches and histories per batch. The configurations used here were mentioned in Section
 \ref{sec:model:OpenMC}.
 
-In terms of converging global iterations across all single physics, each case used 200 Picard Iterations. To assist with
+In terms of converging global iterations across all single physics, each mesh cases used 200 Picard Iterations. To assist with
 convergence of Monte Carlo quantities, Robbins-Monro relaxation was applied to the flux and kappa-fission tallies. This updates the
 quantities of interest for the $n+1$th iteration as an average over the newest solution and the $n$ previous iterations \cite{dufek}.
 So the flux at Picard Iteration $n$ would be given by
@@ -283,13 +282,13 @@ So the flux at Picard Iteration $n$ would be given by
 where $\Phi_{n}$ is the relaxed flux at step $n$ and $\phi_{i}$ is the flux output from the $i$th Monte Carlo solve. In order to
 assess the convergence of each physics, plots of error versus mesh element size were used and will be shown in Section \ref{sec:results}.
 
-\gls{moose} provides steady-state detection as an alternate way of detecting convegence, though it was not used here. By setting a
-steady-state tolerance, \gls{moose} will iterate until the solution norm changes by less than this tolerance. In this benchmark, a
-high number of Picard Iterations was used in order to ensure convergence, but other modelers may not want to incur the computational
-cost of running 200 Picard Iterations. They can use steady-state detection instead.
+One \gls{moose} convergence feature that was not used here is steady-state detection. By setting a steady-state tolerance, \gls{moose}
+will iterate until the solution norm changes by less than this tolerance. In this benchmark, a high number of Picard Iterations was used
+in order to ensure convergence, but other modelers may not want to incur the computational cost of running 200 Picard Iterations. They can
+use steady-state detection instead.
 
 \subsection{Data Mapping}
-One feature of Cardinal is that it does not require the geometry models used in each single-physics sub-application to exactly match the
+One feature of Cardinal is that it does not require the geometry models used in each single-physics sub-application to exactly match the 
 others. This flexibility is a great asset, but it requires the modeler to choose an appropriate geometry model so that the coupling of
 solution fields can resolve the physics feedback effects. At the beginning of every Cardinal simulation, a mapping between \gls{moose}'s mesh
 and other geometry representations is established. For a \gls{moose}-OpenMC coupling, the centroid of every mesh element is mapped to
@@ -297,14 +296,13 @@ a corresponding OpenMC region, which could either be a cell or a mesh element; h
 requested type in the input file in each of the regions of OpenMC that a \gls{moose} centroid falls in. This mapping is used for transferring
 relevant quantities back and forth between iterations. If the modeler is not careful, this mapping may not be meaningful, as important OpenMC
 regions may not get a tally to participate in feedback, or too many \gls{moose} regions could be linked to the same OpenMC region. For this
-simulation, the \gls{moose} geometry and OpenMC geometries were intentionally created to have the same dimensions so that the mapping is
+simulation, the \gls{moose} geometry and OpenMC geometries were intentionally created to have the same dimensions so that the mapping is 
 1-to-1. Each region in the \texttt{MooseMesh} computes a temperature and sends it to a geometrically identical OpenMC region. This same
 region in an OpenMC solve computes a heat source via kappa-fission tally and sends it back to \gls{moose} for the next conduction solve.
 A table below shows the configurations of each case in terms of \gls{moose} mesh elements and OpenMC cells.
-\begin{table}[H]
-    \caption{Simulation geometry configurations.}
-    \begin{adjustbox}{width=0.59\columnwidth,center}
+\begin{table}[b]
     \centering
+    \caption{Simulation geometry configurations.}
     \begin{tabular}{@{}cc@{}}
         \toprule
             Number of \gls{moose} Mesh Elements & Number of OpenMC Cells \\
@@ -312,22 +310,22 @@ A table below shows the configurations of each case in terms of \gls{moose} mesh
             50 & 50 \\
             100 & 100 \\
             250 & 250 \\
-            500 & 500 \\
+            500 & 500 \\ 
             1000 & 1000 \\
         \bottomrule
     \end{tabular}
-    \end{adjustbox}
 \end{table}
+
 \section{RESULTS}\label{sec:results}
 The results to compare with the benchmark are the temperature distribution, flux distribution, and $k$-eigenvalue. The benchmark provides
 analytical solutions for all of these quantities. An example temperature distribution is shown in the figure below for the 50 mesh element case.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.35\linewidth]{figures/temp_50.png}
+    \includegraphics[width=0.55\linewidth]{figures/temp_50.png}
     \caption{The computed temperature for 50 mesh elements.}
     \label{fig:temp50}
 \end{figure}
-In order to assess the accuracy of the numerical temperature and verify that refining the mesh increases the accuracy, the analytical solution
+In order to assess the accuracy of the temperature solution and verify that refining the mesh increases the accuracy, the analytical solution
 was used to compute an $L_{2}$ error norm for temperature. The error computed, $\epsilon_{T}$, is given by
 \begin{equation}
     \epsilon_{T} = \frac{|| T_{a} - T_{x} ||_{2}}{|| T_{a} ||_{2}},
@@ -336,7 +334,7 @@ where $T_{a}$ is the analytical solution evaluated at the $x$-centroid of each m
 voxel from the multiphysics simulation. The figure below shows how the temperature error norm relates to the number of mesh elements
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.45\linewidth]{figures/temp_error_norms.png}
+    \includegraphics[width=0.55\linewidth]{figures/temp_error_norms.png}
     \caption{The number of mesh elements vs the log of the $L_{2}$ error norm for the computed vs analytical temperature.}
     \label{fig:temp_error_study}
 \end{figure}
@@ -348,32 +346,26 @@ was used on the flux solution as well. The flux error norm, $\epsilon_{\phi}$, i
 The figure below shows how the flux error norm relates to the number of mesh elements
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.45\linewidth]{figures/flux_error_norms.png}
+    \includegraphics[width=0.55\linewidth]{figures/flux_error_norms.png}
     \caption{The number of mesh elements vs the log of the $L_{2}$ error norm for the computed vs analytical flux.}
     \label{fig:flux_error_study}
 \end{figure}
-% The slope of the line of best fit for $\log(N)$ vs $\log(\epsilon_{\phi})$ plot is $-0.9496$. This deviation from first order is clearly being
-% caused by the error in the finest case ($N=1000$). The error for the $N=1000$ case appears to be experiencing issues related to the element size.
-% The error for the $N=1000$ cases does decrease compared to $N=500$, but not be enough to fall in  line with linear convergence. This is the case
-% where the volume of each cell/element is the smallest.  
+The slope of the line of best fit for $\log(N)$ vs $\log(\epsilon_{\phi})$ plot is $-0.9496$. This deviation from first order is clearly being
+caused by the error in the finest case ($N=1000$). The error for the $N=1000$ cases does decrease compared to $N=500$, but not be enough to fall in
+line with linear convergence. This is the case where the volume of each cell/element is the smallest. In Monte Carlo, as the volume of a region holding
+a tally gets smaller, fewer events will happen in that region per history, and thus more histories are required to get the same uncertainty. The
+$N=1000$ case appears to be experiencing issues related to the element size. One possible source of error could be the refinement in the cross-section
+temperature library. All cases used a library with $50$ temperatures, so it is possible that this case is reaching a limit where more data refinement
+would be required to achieve the expected convergence that matches the other cases.
 
-The error for temperature agrees to first order, which is expected from \gls{fem}. However, the flux is a statistical quantity, and so there are more
-confounding factors in the error. Spatial discretization contributes to the error and should decrease with increasing number of cells, but there are
-other error contributing. For example the resolution of the temperature data used to compute the cross-section could be contributing and overshadowing
-the decrease due to discretization. In Monte Carlo, as the volume of a region holding a tally gets smaller, fewer events will happen in that region
-per history, and thus more histories are required to get the same uncertainty. When refining the spatial discretization, other discretizations, such as
-the temperature cross-section library, may need to be increased to gain the full benefit of using a finer discretization in space. All cases used a
-library with $50$ temperatures, so it is possible that the finer cases are reaching a limit where more data refinement would be required to achieve
-better convergence.
-
-While the flux does perform as well in the $L_{2}$ error norm, it performs well in another measure of comparison -- the \gls{ce}. The
+While this case appears to not perform as well from the $L_{2}$ error norm, it performs will in another measure of comparison -- the \gls{ce}. The
 \gls{ce} is the ratio between the computed quantity, $C$, and the expected answer, $E$. In this case, $C$ would either be the temperature or flux
 output from Cardinal, and $E$ would be the corresponding analytical solution. Thus, the \gls{ce} ratio $r$ is given by
 \begin{equation} \label{eq:ce}
    r  = \frac{C}{E}.
 \end{equation}
-The ideal numerical results would exactly equal the analytical solution: a ratio of $r=1$. The temperature and flux \glspl{ce} for each mesh element
-and cell, respectively, are shown in the figures below.
+The ideal would be exact equality, or a ratio of $r=1$. The temperature and flux \glspl{ce} for each mesh element and cell, respectively, are shown in the
+figure below.
 \begin{figure}[H]
     \centering
     \begin{minipage}[b]{0.495\linewidth}
@@ -384,38 +376,11 @@ and cell, respectively, are shown in the figures below.
     \end{minipage}
     \caption{The left shows the \gls{ce} for temperature on every mesh and the right shows the \gls{ce} for flux in each cell.}
 \end{figure}
-The black line signifies the perfect $r=1$. As the refinement in the mesh increases, the temperature \gls{ce} get closer to the ideal. The last few
-cases are quite close to each other, as well. Since the flux is a statistical quantity, the uncertainty was propagated to the ratio in (\ref{eq:ce}).
-If $\sigma_{\phi}$ is the uncertainty in the flux and  $\phi_{a}$ is the analytical flux, then the uncertainty in the \gls{ce}, $\sigma_{r}$, is
-given by
-\begin{equation}\label{eq:err_prop_r}
-    \sigma_{r} = \frac{\sigma_{\phi}}{\phi_{a}}.
-\end{equation}
-The figures below show individual \gls{ce} with two-sigma error bars: meaning 95 percent of samples are within the range of the error bars.
-\begin{figure}[H]
-    \centering
-    \begin{minipage}[b]{0.32\linewidth}
-        \includegraphics[width=\linewidth]{figures/50_flux_CE_error_bars.png}
-    \end{minipage}
-    \begin{minipage}[b]{0.32\linewidth}
-        \includegraphics[width=\linewidth]{figures/50_flux_CE_error_bars.png}
-    \end{minipage}
-    \begin{minipage}[b]{0.32\linewidth}
-        \includegraphics[width=\linewidth]{figures/50_flux_CE_error_bars}
-    \end{minipage}
-    \begin{minipage}[b]{0.32\linewidth}
-        \includegraphics[width=\linewidth]{figures/500_flux_CE_error_bars}
-    \end{minipage}
-    \begin{minipage}[b]{0.32\linewidth}
-        \includegraphics[width=\linewidth]{figures/1000_flux_CE_error_bars}
-    \end{minipage}
-    \caption{Each figure above shows a \gls{ce} with two-sigma error bars. The top left is the 50 case, followed by the 100 case, 250 case, 500 case, and 1000 case, in order.}
-\end{figure}
-The correct answer $r=1$ lays within two-sigma for almost every mesh point in every case, thus these figures build confidence that Cardinal is outputting
-a correct flux distribution, within statistical uncertainty. The eigenvalue for each mesh is reported in the table below.
+Despite the disagreement from linear convergence for the flux, the \gls{ce} for the $N=1000$ case appears to be the closest to the line $y=1$. This
+builds confidence that Cardinal is outputting a correct flux distribution for this case. The eigenvalue for each mesh is reported in the table below.
 \begin{table}[H]
     \centering
-    \caption{Eigenvalue with uncertainty for each mesh size, and the pcm difference from the analytical. \textbf{TODO update once final simulation ends}}
+    \caption{Eigenvalue with uncertainty for each mesh size, and the pcm difference from the analytical.}
     \begin{tabular}{@{}ccc@{}}
         \toprule
         \multicolumn{3}{c}{analytical $k_{eff}=0.29557$} \\
@@ -432,25 +397,27 @@ a correct flux distribution, within statistical uncertainty. The eigenvalue for 
     \label{tab:data}
 \end{table}
 The eigenvalue is the metric that agrees with the analytical solution the quickest. This is due to it being a system-wide parameter, which gains
-contributions from every fission event, no matter which cell they occur in. It converges in much fewer cells than the flux, which only gains
-contributions only when an event occurs in a given cell. All the standard deviations of the computed eigenvalues are below 13 pcm, which is a
-tightly converged answer. The analytical eigenvalue is within one standard deviation of the computed eigenvalue for all cases except the $N=500$;
-this case is off by 18 pcm, but the analytical eigenvalue is only 5 pcm above the upper bound of the 13 pcm uncertainty associated with that tally.
+contributions from every fission event, no matter which cell they occur in. It converges much quicker than the flux, which only gains contributions
+when an event occurs in a given cell. All the standard deviations of the computed eigenvalues are below 13 pcm, which is a tightly converged answer.
+The analytical eigenvalue is within one standard deviation of the computed eigenvalue for all cases except the $N=500$; this case is off by 18 pcm,
+but the analytical eigenvalue is only 5 pcm above the upper bound of the 13 pcm uncertainty associated with that tally.
 
 \section{CONCLUSIONS}\label{sec:conclusions}
-Overall, the numerical results show agreement with the analytical solutions, despite the unsuccessful flux error norm. The convergence is first order
-for the temperature and the \gls{ce} for the fluxes contain the analytical solution within two-sigma. Since zeroth order shape functions are used for
-temperature in the \gls{fem}, the first order temperature spatial convergence is to be expected \cite{moose-convergence}. The eigenvalue agrees very
-well for all cases.
 
-While code to code benchmarking is important in for nuclear \gls{ms}, agreement with analytical benchmarks also serve an important purpose. The ability
-to agree with physics theory increases confidence in multiphysics coupling. Though typical industry-grade simulations would not run $S_{2}$ transport,
-this modification allows Cardinal to show it can match against a theoretical problem. Another study with Cardinal \cite{aya2023}, coupled OpenMC Monte
-Carlo transport to NekRS heat conduction. In principle, this benchmark could also use that coupling, and it will be future work to validate this
- OpenMC-\gls{moose} coupling to a study matching the same physics in an OpenMC-NekRs coupling. In addition to the various, ongoing verification efforts,
-validation against physical experiments would be another next step to increase confidence in Cardinal's modeling capabilities.
+Overall, the numerical results show agreement with the analytical solutions. The convergence is first order for the temperature, and the flux shows
+near first order convergence, baring the $N=1000$ case. Since zeroth order shape functions are used for temperature in the \gls{fem}, the first order
+temperature spatial convergence is to be expected \cite{moose-convergence}. The \gls{ce} approach closer and closer to $y=1$ as $N$ increases in
+each case. The eigenvalue agrees very well for all cases.
 
-\printglossary[title={NOMENCLATURE}, nonumberlist, nopostdot]
+While code to code benchmarking is common in for nuclear \gls{ms}, agreement with analytical benchmarks increases the confidence in Cardinal's
+multiphysics coupling. Though typical industry-grade simulations would not run $S_{2}$ transport, this modification allows Cardinal to show it can
+match against theoretical problems as well. Another study with Cardinal \cite{novak-2023}, coupled OpenMC Monte Carlo transport to NekRS heat conduction.
+In principle, this benchmark could also use that coupling, and it will be future work to validate this OpenMC-\gls{moose} coupling to a study matching
+the same physics in an OpenMC-NekRs coupling. In addition to the various, ongoing verification efforts, validation against physical experiments would be
+another next step to increase confidence in Cardinal's modeling capabilities.
+\section*{NOMENCLATURE}
+
+\printglossary[title={Nomenclature}, nonumberlist, nopostdot]
 
 \section*{ACKNOWLEDGEMENTS}
 The authors would like to thank the OpenMC and MOOSE development teams for their guidance in model setup and assistance
