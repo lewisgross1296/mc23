@@ -355,11 +355,11 @@ The figure below shows how the flux error norm relates to the number of mesh ele
 % The slope of the line of best fit for $\log(N)$ vs $\log(\epsilon_{\phi})$ plot is $-0.9496$. This deviation from first order is clearly being
 % caused by the error in the finest case ($N=1000$). The error for the $N=1000$ case appears to be experiencing issues related to the element size.
 % The error for the $N=1000$ cases does decrease compared to $N=500$, but not be enough to fall in  line with linear convergence. This is the case
-% where the volume of each cell/element is the smallest.  
+% where the volume of each cell/element is the smallest.
 
 The error for temperature agrees to first order, which is expected from \gls{fem}. However, the flux is a statistical quantity, and so there are more
 confounding factors in the error. Spatial discretization contributes to the error and should decrease with increasing number of cells, but there are
-other error contributing. For example the resolution of the temperature data used to compute the cross-section could be contributing and overshadowing
+other error terms contributing. For example the resolution of the temperature data used to compute the cross-section could be contributing and overshadowing
 the decrease due to discretization. In Monte Carlo, as the volume of a region holding a tally gets smaller, fewer events will happen in that region
 per history, and thus more histories are required to get the same uncertainty. When refining the spatial discretization, other discretizations, such as
 the temperature cross-section library, may need to be increased to gain the full benefit of using a finer discretization in space. All cases used a
@@ -398,10 +398,10 @@ The figures below show individual \gls{ce} with two-sigma error bars: meaning 95
         \includegraphics[width=\linewidth]{figures/50_flux_CE_error_bars.png}
     \end{minipage}
     \begin{minipage}[b]{0.32\linewidth}
-        \includegraphics[width=\linewidth]{figures/50_flux_CE_error_bars.png}
+        \includegraphics[width=\linewidth]{figures/100_flux_CE_error_bars.png}
     \end{minipage}
     \begin{minipage}[b]{0.32\linewidth}
-        \includegraphics[width=\linewidth]{figures/50_flux_CE_error_bars}
+        \includegraphics[width=\linewidth]{figures/250_flux_CE_error_bars}
     \end{minipage}
     \begin{minipage}[b]{0.32\linewidth}
         \includegraphics[width=\linewidth]{figures/500_flux_CE_error_bars}
@@ -412,30 +412,30 @@ The figures below show individual \gls{ce} with two-sigma error bars: meaning 95
     \caption{Each figure above shows a \gls{ce} with two-sigma error bars. The top left is the 50 case, followed by the 100 case, 250 case, 500 case, and 1000 case, in order.}
 \end{figure}
 The correct answer $r=1$ lays within two-sigma for almost every mesh point in every case, thus these figures build confidence that Cardinal is outputting
-a correct flux distribution, within statistical uncertainty. The eigenvalue for each mesh is reported in the table below.
+a correct flux distribution, within statistical uncertainty. The $k$-eigenvalue for each mesh is reported in the table below.
 \begin{table}[H]
     \centering
-    \caption{Eigenvalue with uncertainty for each mesh size, and the pcm difference from the analytical. \textbf{TODO update once final simulation ends}}
+    \caption{Eigenvalue with uncertainty for each mesh size, and the pcm difference from the analytical.}
     \begin{tabular}{@{}ccc@{}}
         \toprule
         \multicolumn{3}{c}{analytical $k_{eff}=0.29557$} \\
         \midrule
         number of OpenMC cells & numerical $k_{eff}$ & pcm (analytical - numerical)\\
         \midrule
-        50 & 0.29555 $\pm$ 0.00009 & -2 \\
-        100 & 0.29551 $\pm$ 0.00011 & -6 \\
-        250 & 0.29560  $\pm$ 0.00012 &  -3 \\
-        500 & 0.29575 $\pm$ 0.00013 & 18 \\
-        1000 & 0.29551 $\pm$ 0.00013 & -6 \\
+        50 & 0.29548 $\pm$ 0.00004 & 9 \\
+        100 & 0.29551 $\pm$ 0.00005 & 6 \\
+        250 & 0.29564  $\pm$ 0.00004 &  -7 \\
+        500 & 0.29552 $\pm$ 0.00006 & 5 \\
+        1000 & 0.29553 $\pm$ 0.00005 & 4 \\
         \bottomrule
     \end{tabular}
     \label{tab:data}
 \end{table}
-The eigenvalue is the metric that agrees with the analytical solution the quickest. This is due to it being a system-wide parameter, which gains
-contributions from every fission event, no matter which cell they occur in. It converges in much fewer cells than the flux, which only gains
-contributions only when an event occurs in a given cell. All the standard deviations of the computed eigenvalues are below 13 pcm, which is a
-tightly converged answer. The analytical eigenvalue is within one standard deviation of the computed eigenvalue for all cases except the $N=500$;
-this case is off by 18 pcm, but the analytical eigenvalue is only 5 pcm above the upper bound of the 13 pcm uncertainty associated with that tally.
+The results show close agreement with the analytical solution, as all cases within 9 pcm. The eigenvalues generally agree better as more mesh elements
+are used. The only exception being that the $N=100$ case agrees better by 1 pcm over the $N=250$ case. The strong agreement is due to being a system-wide
+parameter, which gains contributions from every fission event, no matter which cell they occur in. It performs better than the flux, which only gains
+contributions only when an event occurs in a given cell. All the standard deviations of the computed eigenvalues are 6 pcm or below, which is a
+tightly converged answer.
 
 \section{CONCLUSIONS}\label{sec:conclusions}
 Overall, the numerical results show agreement with the analytical solutions, despite the unsuccessful flux error norm. The convergence is first order
