@@ -301,51 +301,49 @@ elements/cells in both \gls{moose} and OpenMC.
 The results to compare with the benchmark are the temperature distribution, flux distribution, and $k$-eigenvalue. The benchmark provides
 analytical solutions for all of these quantities. An example temperature and flux distribution is shown in Figure \ref{fig:temp_flux_50}
 for the 50 mesh element case.
-\begin{figure}[H]
+\begin{figure}
     \centering
-    \begin{minipage}[b]{0.495\linewidth}
+    \begin{minipage}[b]{0.485\linewidth}
         \includegraphics[width=\linewidth]{figures/temp_50.png}
     \end{minipage}
-    \begin{minipage}[b]{0.495\linewidth}
+    \begin{minipage}[b]{0.485\linewidth}
         \includegraphics[width=\linewidth]{figures/flux_50.png}
     \end{minipage}
     \caption{The computed temperature and flux for 50 mesh elements. The error bars show the relative error of the flux
     (nearly smaller than the circular marker size).}\label{fig:temp_flux_50}
 \end{figure}
-In order to assess the accuracy of the numerical temperature and verify that refining the mesh increases the accuracy, the analytical solution
-was used to compute an $L_{2}$ error norm for temperature. The error computed, $\epsilon_{T}$, is given by
+In order to assess the accuracy of the numerical quantities and verify that refining the mesh increases the accuracy, the analytical solution
+was used to compute an $L_{2}$ error norm for temperature and flux. The error computed, $\epsilon_{T}$, is given by
 \begin{equation}
     \epsilon_{T} = \frac{|| T_{a} - T_{x} ||_{2}}{|| T_{a} ||_{2}},
 \end{equation}
 where $T_{a}$ is the analytical solution evaluated at the $x$-centroid of each mesh element and $T_{x}$ is the temperature computed for that
-voxel from the multiphysics simulation. Figure \ref{fig:temp_error_study} shows how the temperature error norm relates to the number of mesh
-elements.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.5\linewidth]{figures/temp_error_norms.png}
-    \caption{Temperature error as a function of heat conduction mesh element count.}
-    \label{fig:temp_error_study}
-\end{figure}
-Linear convergence is achieved, as the slope of the line in Figure \ref{fig:temp_error_study} is $-0.9982$ ($R^2\approx1.0$). The same convergence test
-was used on the flux solution as well. The flux error norm, $\epsilon_{\phi}$, is defined as
+voxel from the multiphysics simulation. The same convergence test was used on the flux solution as well. Using the same notation convention, 
+the flux error norm, $\epsilon_{\phi}$, is defined as
 \begin{equation}
     \epsilon_{\phi} =  \frac{|| \phi_{a} - \phi_{x} ||_{2}}{|| \phi_{a} ||_{2}}.
 \end{equation}
-Figure \ref{fig:flux_error_study} shows how the flux error norm relates to the number of mesh elements.
+Figure \ref{fig:error_study} shows how the temperature and flux error norms relate to the number of mesh elements and cells used.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.45\linewidth]{figures/flux_error_norms.png}
-    \caption{Flux error as a function of OpenMC cell count.}
-    \label{fig:flux_error_study}
+    \begin{minipage}[b]{0.485\linewidth}
+        \includegraphics[width=\linewidth]{figures/temp_error_norms.png}
+    \end{minipage}
+    \begin{minipage}[b]{0.485\linewidth}
+        \includegraphics[width=\linewidth]{figures/flux_error_norms.png}
+    \end{minipage}
+    \caption{Temperature (left) and flux (right) error norms as a function of heat conduction mesh element count and OpenMC cell count, respectively.}
+    \label{fig:error_study}
 \end{figure}
-
-Spatial discretization contributes to the error and should decrease with increasing number of cells, but there are other error terms contributing.
-In the Monte Carlo method, as the volume of a region filtering a tally gets smaller, fewer events will happen in that region, and thus more histories
-are required to get the same uncertainty. When refining the spatial discretization, other discretizations, such as the temperature cross section library,
-may need to be increased to gain the full benefit of using a finer discretization in space. For example the resolution of the temperature data used to
-compute the cross section could be contributing and overshadowing the decrease due to discretization. All cases used a library with $50$ temperatures,
-so it is possible that the finer cases are reaching a limit where more data refinement would be required to achieve better convergence. In future work,
-we will repeat this benchmark with fewer than 50 elements/cells to explore whether we are in such a regime.
+For the temperature distributions, linear convergence is achieved, as the slope of the temperature line in Figure \ref{fig:error_study} is
+$-0.9982$ ($R^2\approx1.0$). The flux error norms do not appear to follow a linear pattern like the temperature error does. Spatial discretization
+contributes to the error and should decrease with increasing number of cells, but there are other error terms contributing. In the Monte Carlo
+method, as the volume of a region filtering a tally gets smaller, fewer events will happen in that region, and thus more histories are required
+to get the same uncertainty. When refining the spatial discretization, other discretizations, such as the temperature cross section library,
+may need to be increased to gain the full benefit of using a finer discretization in space. For example the resolution of the temperature data
+used to compute the cross section could be contributing and overshadowing the decrease due to discretization. All cases used a library with $50$
+temperatures, so it is possible that the finer cases are reaching a limit where more data refinement would be required to achieve better
+convergence. In future work, we will repeat this benchmark with fewer than 50 elements/cells to explore whether we are in such a regime.
 
 While the $L_2$ error norm of the flux does not exhibit the expected convergence, the results do compare favorably with the analytical results
 throughout the domain and for all spatial resolutions. The ratio between the computed quantity, $C$, and the expected answer, $E$, for the
@@ -354,39 +352,52 @@ perfect agreement. Note the scales of the $y$-axes - the temperature is everywhe
 mesh) and flux is everywhere being predicted to within 0.06\%.
 \begin{figure}[H]
     \centering
-    \begin{minipage}[b]{0.495\linewidth}
+    \begin{minipage}[b]{0.485\linewidth}
         \includegraphics[width=\linewidth]{figures/temp_num_to_analy_ratios.png}
     \end{minipage}
-    \begin{minipage}[b]{0.495\linewidth}
+    \begin{minipage}[b]{0.485\linewidth}
         \includegraphics[width=\linewidth]{figures/flux_num_to_analy_ratios.png}
     \end{minipage}
     \caption{Temperature (left) and flux (right) C/E.}
     \label{fig:ce}
 \end{figure}
-As the refinement in the mesh increases, the temperature $C/E$ get closer to the ideal. Since the flux is a statistical quantity, the statistical
-uncertainty was propagated to the $C/E$ ratio. If $\sigma_{\phi}$ is the uncertainty in the flux and  $\phi_{a}$ is the analytical flux, then
-the uncertainty in the $C/E$, $\sigma_{C/E}$, is given by
-\begin{equation}\label{eq:err_prop_r}
-    \sigma_{C/E} = \frac{\sigma_{\phi}}{\phi_{a}}.
+As the refinement in the mesh increases, the temperature $C/E$ get closer to the ideal. The $C/E$ ratio depends on two quantities with uncertainty; the
+flux from OpenMC $\hat{\phi}$ has uncertainty $\sigma_{\hat{\phi}}$ and the fission heating tally $\hat{H}$ has uncertainty $\sigma_{\hat{H}}$. Writing
+the $C/E$ explicitly
+\begin{equation}\label{eq:CE_formula}
+    C/E = 
+    \frac{P\hat{\phi}}{V_{cell}\hat{H}\phi_{A}} = \frac{S\hat{\phi}}{V_{cell}\phi_{A}},
+\end{equation}
+where $V_{cell}$ is the tallied region's volume and $\phi_{A}$ is the analytical flux. Propagating both errors gives
+\begin{equation}\label{eq:sigma_ce_def}
+    \sigma_{C/E}^2 =
+    \left( \frac{\partial C/E}{\partial\hat{\phi}} \right)^2 \sigma_{\hat{\phi}}^2  +
+     \left( \frac{\partial C/E}{\partial \hat{H}} \right)^2 \sigma_{\hat{H}}^2 .
+\end{equation}
+Now denote $\phi$, $\sigma_{\phi}$, $H$, and $\sigma_{H}$ as the quantities with physical units, i.e. the OpenMC outputs multiplied by the source strength.
+Evaluating the derivatives and simplifying gives
+\begin{equation}\label{eq:sigma_CE_physical_units}
+    \sigma_{C/E}^2 =
+    \left(\frac{\sigma_{\phi} }{\phi_{A}} \right)^2 +
+     \left( \frac{\phi}{\phi_{A}}\frac{V_{cell}}{P}\sigma_{H} \right)^2.
 \end{equation}
 Figure \ref{fig:ce2} shows individual $C/E$ with $2\sigma$ error bars (95\% confidence interval). All points are within $2\sigma$ for each mesh choice, indicating that Cardinal is computing
 a correct flux distribution, within statistical uncertainty. 
-
 \begin{figure}[H]
     \centering
-    \begin{minipage}[b]{0.48\linewidth}
+    \begin{minipage}[b]{0.49\linewidth}
         \includegraphics[width=\linewidth]{figures/50_flux_CE_error_bars.png}
     \end{minipage}
-    \begin{minipage}[b]{0.48\linewidth}
+    \begin{minipage}[b]{0.49\linewidth}
         \includegraphics[width=\linewidth]{figures/100_flux_CE_error_bars.png}
     \end{minipage}
-    \begin{minipage}[b]{0.48\linewidth}
+    \begin{minipage}[b]{0.49\linewidth}
         \includegraphics[width=\linewidth]{figures/250_flux_CE_error_bars}
     \end{minipage}
-    \begin{minipage}[b]{0.48\linewidth}
+    \begin{minipage}[b]{0.49\linewidth}
         \includegraphics[width=\linewidth]{figures/500_flux_CE_error_bars}
     \end{minipage}
-    \begin{minipage}[b]{0.48\linewidth}
+    \begin{minipage}[b]{0.49\linewidth}
         \includegraphics[width=\linewidth]{figures/1000_flux_CE_error_bars}
     \end{minipage}
     \caption{Each figure above shows a $C/E$ with two-sigma error bars. The top left is the 50 case, followed by the 100 case, 250 case, 500 case, and 1000 case, in order.}
