@@ -168,12 +168,12 @@ $\kappa$, the energy released per reaction $q$, the total, macroscopic cross sec
 \begin{equation}
      \frac{d}{dx}\left\lbrack\kappa(T)\frac{dT(x)}{dx}\right\rbrack + q \Sigma_{t}(x)\phi(x) = 0.
 \end{equation}
-Note that typically $q$ represents the energy per fission, but in this benchmark, $q$ is per total reaction. 
+Note that typically $q$ represents the energy per fission, but in this benchmark, $q$ is per total reaction.
 
 By defining the problem in this way, the differential equations for thermal conduction and neutron transport have similar forms,
 suggesting that it may be possible to assume that the temperature and flux are related by a constant, $T(x)=f\phi(x)$. This
 assumption is satisfied by manipulating the \glspl{ode}, inserting the cross section temperature dependence, and matching
-coefficients so that the two \glspl{ode} are of the same form. The matching of coefficients imposes two constraints that give
+coefficients so that the two \glspl{ode} aae of the same form. The matching of coefficients imposes two constraints that give
 equations for the total, microscopic cross section $\sigma_{t,0}$ and the heat transfer coefficient $h$, in terms of the slab
 parameters. An important consequence of this problem is that the fission power is uniform throughout the geometry. For full
 details on the analytical solution's derivation, see \cite{analytical-benchmark}.
@@ -224,7 +224,7 @@ followed by sufficient active batches to accumulate the relevant tally results. 
 this system was conducted on the 1000 cell case, and found that the Shannon Entropy converges after about 5 inactive batches. While this
 may seem like a low number, the problem is 1-D and the initial guess provided to OpenMC is a uniform distribution, which is the same
 shape as the actual converged solution. The $k$-eigenvalue simulation used 50,000 particles per batch, with 50 inactive batches and
-50 active batches for every case. 
+100 active batches for every case.
 
 For simplicity, we run 200 Picard iterations for each case, though more advanced metrics in Cardinal can be used for programmatically
 evaluating coupled physics convergence. Once the temperature was converged following 200 Picard iterations, a final OpenMC run was
@@ -239,7 +239,7 @@ normalization relies on a source strength, $S$, related to the total system powe
    S = \frac{P}{H} \left[\frac{\textrm{sp}}{\textrm{s}} \right]
 \end{equation}
 where $P=10^{22} \frac{\textrm{eV}}{\textrm{s}}$ is the slab integrated power from the benchmark and $H \left[\frac{\textrm{eV}}{\textrm{sp}} \right]$
-is the total tallied fission heating tally. Each tally must be multiplied by this source strength to convert to physically meaningful units. 
+is the total tallied fission heating tally. Each tally must be multiplied by this source strength to convert to physically meaningful units.
 Since OpenMC does not report volume-normalized tallies, it may be necessary to divide by the cell volume for quantities such as neutron flux and
 volumetric heating.
 
@@ -293,7 +293,7 @@ used for transferring relevant quantities back and forth between Picard iteratio
 geometries were intentionally created to have the same dimensions so that the mapping is 1-to-1. Each region in the \texttt{MooseMesh}
 computes a temperature and sends it to a geometrically identical OpenMC region. This same region in an OpenMC solve computes a heat source
 via the fission heating tally and sends it back to \gls{moose} for the next conduction solve. Again, we want to emphasize that this strict
-1:1 mapping is {\it not} mandatory in Cardinal, and rather a general centroid-based many-to-one mapping from elements to cells can be used. 
+1:1 mapping is {\it not} mandatory in Cardinal, and rather a general centroid-based many-to-one mapping from elements to cells can be used.
 In order to explore the convergence with spatial resolution, five different cases were analyzed with $N=[50, 100, 250, 500, 1000]$ spatial
 elements/cells in both \gls{moose} and OpenMC.
 
@@ -318,7 +318,7 @@ was used to compute an $L_{2}$ error norm for temperature and flux. The error co
     \epsilon_{T} = \frac{|| T_{a} - T_{x} ||_{2}}{|| T_{a} ||_{2}},
 \end{equation}
 where $T_{a}$ is the analytical solution evaluated at the $x$-centroid of each mesh element and $T_{x}$ is the temperature computed for that
-voxel from the multiphysics simulation. The same convergence test was used on the flux solution as well. Using the same notation convention, 
+voxel from the multiphysics simulation. The same convergence test was used on the flux solution as well. Using the same notation convention,
 the flux error norm, $\epsilon_{\phi}$, is defined as
 \begin{equation}
     \epsilon_{\phi} =  \frac{|| \phi_{a} - \phi_{x} ||_{2}}{|| \phi_{a} ||_{2}}.
@@ -336,7 +336,7 @@ Figure \ref{fig:error_study} shows how the temperature and flux error norms rela
     \label{fig:error_study}
 \end{figure}
 For the temperature distributions, linear convergence is achieved, as the slope of the temperature line in Figure \ref{fig:error_study} is
-$-0.9982$ ($R^2\approx1.0$). The flux error norms do not appear to follow a linear pattern like the temperature error does. Spatial discretization
+$-0.9977$ ($R^2\approx1.0$). The flux error norms do not appear to follow a linear pattern like the temperature error does. Spatial discretization
 contributes to the error and should decrease with increasing number of cells, but there are other error terms contributing. In the Monte Carlo
 method, as the volume of a region filtering a tally gets smaller, fewer events will happen in that region, and thus more histories are required
 to get the same uncertainty. When refining the spatial discretization, other discretizations, such as the temperature cross section library,
@@ -349,7 +349,7 @@ While the $L_2$ error norm of the flux does not exhibit the expected convergence
 throughout the domain and for all spatial resolutions. The ratio between the computed quantity, $C$, and the expected answer, $E$, for the
 temperature in each element and flux in each cell are shown in Figure \ref{fig:ce}. A black line for $C/E = 1$ is marked in each plot indicating
 perfect agreement. Note the scales of the $y$-axes - the temperature is everywhere being predicted to within 0.006\% (for the coarsest temperature
-mesh) and flux is everywhere being predicted to within 0.06\%.
+mesh) and flux is everywhere being predicted to within 0.05\%.
 \begin{figure}[H]
     \centering
     \begin{minipage}[b]{0.485\linewidth}
@@ -365,10 +365,10 @@ As the refinement in the mesh increases, the temperature $C/E$ get closer to the
 flux from OpenMC $\hat{\phi}$ has uncertainty $\sigma_{\hat{\phi}}$ and the fission heating tally $\hat{H}$ has uncertainty $\sigma_{\hat{H}}$. Writing
 the $C/E$ explicitly
 \begin{equation}\label{eq:CE_formula}
-    C/E = 
+    C/E =
     \frac{P\hat{\phi}}{V_{cell}\hat{H}\phi_{A}} = \frac{S\hat{\phi}}{V_{cell}\phi_{A}},
 \end{equation}
-where $V_{cell}$ is the tallied region's volume and $\phi_{A}$ is the analytical flux. Propagating both errors gives
+where $V_{cell}$ is the tallied region's volume and $\phi_{A}$ is the analytical flux. Propagating both errors:
 \begin{equation}\label{eq:sigma_ce_def}
     \sigma_{C/E}^2 =
     \left( \frac{\partial C/E}{\partial\hat{\phi}} \right)^2 \sigma_{\hat{\phi}}^2  +
@@ -382,7 +382,7 @@ Evaluating the derivatives and simplifying gives
      \left( \frac{\phi}{\phi_{A}}\frac{V_{cell}}{P}\sigma_{H} \right)^2.
 \end{equation}
 Figure \ref{fig:ce2} shows individual $C/E$ with $2\sigma$ error bars (95\% confidence interval). All points are within $2\sigma$ for each mesh choice, indicating that Cardinal is computing
-a correct flux distribution, within statistical uncertainty. 
+a correct flux distribution, within statistical uncertainty.
 \begin{figure}[H]
     \centering
     \begin{minipage}[b]{0.49\linewidth}
@@ -404,7 +404,7 @@ a correct flux distribution, within statistical uncertainty.
 \label{fig:ce2}
 \end{figure}
 
-The $k$-eigenvalue for each resolution is reported in Table \ref{tab:data}.
+The $k$-eigenvalue for each resolution is reported in Table \ref{tab:data}. \textbf{todo update discussion}
 The results show close agreement with the analytical solution, as all cases within 9 pcm. The eigenvalues generally agree better as more mesh elements
 are used. The only exception being that the $N=100$ case agrees better by 1 pcm over the $N=250$ case. The good agreement is due to \keff\ being a system-wide
 parameter which is less sensitive to spatial discretization of temperature feedback than the flux distribution itself.
@@ -418,11 +418,11 @@ parameter which is less sensitive to spatial discretization of temperature feedb
         \midrule
         analytical & 0.29557 & - \\
         \midrule
-        50 & 0.29548 $\pm$ 0.00004 & \phantom{-}9 $\pm$ 4 \\
-        100 & 0.29551 $\pm$ 0.00005 & \phantom{-}6 $\pm$ 5 \\
-        250 & 0.29564  $\pm$ 0.00004 &  -7 $\pm$ 4 \\
-        500 & 0.29552 $\pm$ 0.00006 & \phantom{-}5 $\pm$ 6 \\
-        1000 & 0.29553 $\pm$ 0.00005 & \phantom{-}4 $\pm$ 5 \\
+        50 & 0.29553 $\pm$ 0.00004 & \phantom{-}4 $\pm$ 4 \\
+        100 & 0.29557 $\pm$ 0.00003 & \phantom{-}0 $\pm$ 3 \\
+        250 & 0.29561  $\pm$ 0.00004 &  -4 $\pm$ 4 \\
+        500 & 0.29561 $\pm$ 0.00004 & -4 $\pm$ 4 \\
+        1000 & 0.29558 $\pm$ 0.00004 & -1 $\pm$ 4 \\
     \bottomrule
     \end{tabular}
     \label{tab:data}
