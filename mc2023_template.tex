@@ -88,7 +88,7 @@ Heat Transfer and Neutron Transport}
 
 \begin{abstract}
 Cardinal is a multiphysics software tool that couples OpenMC Monte Carlo transport and NekRS \gls{cfd} to the \gls{moose}. This
-work verifies Cardinal for coupled neutron transport and heat conduction using a 1-D analytic solution from a previous work by the
+work verifies Cardinal for coupled neutron transport and heat conduction using a 1-D analytic solution from previous work by the
 Naval Nuclear Laboratory. This numerical benchmark includes $S_2$ transport, Doppler-broadened cross sections, thermal conduction
 and expansion, and convective boundary conditions. The goal of this work is to verify Cardinal's basic multiphysics modeling
 capabilities for coupled neutronics and heat conduction. The benchmark provides analytical solutions for the temperature and flux
@@ -110,7 +110,7 @@ with physics-based simulation. This can reduce uncertainty in analyses, enabling
 and licensing certainty. However, analytical benchmarks and comparison to experimental data are required to assess the stability,
 convergence, and accuracy of these high-fidelity models for reactor design and analysis.
 
-Cardinal\footnote{\url{https://cardinal.cels.anl.gov/}} is an open-source code \cite{novak2022-cardinal,cardinal-website}
+Cardinal\footnote{\url{https://cardinal.cels.anl.gov/}} is an open-source code \cite{novak2022-cardinal}
 that wraps OpenMC \cite{openmc} Monte Carlo particle transport and NekRS \cite{nekrs} \gls{cfd} within the \gls{moose}
 \cite{lindsay2022moose} framework. This coupling brings high-fidelity multiphysics feedback to the \gls{moose} ``ecosystem.''
 Cardinal couples OpenMC and NekRS to \gls{moose} simulations by copying data between the internal code data structures
@@ -122,7 +122,7 @@ NekRS) or source terms (such as for volumetric heating with OpenMC). Convergence
 For coupled neutronics-thermal-fluid simulations with OpenMC, each Picard iteration consists of several steps: 1)~a \gls{moose}
 application (e.g. BISON, Pronghorn, NekRS via Cardinal, ...) solves for temperatures and densities; 2)~Cardinal transfers
 temperatures and densities to the OpenMC model; 3)~OpenMC solves for the nuclear heating; and 4)~Cardinal transfers the tally
-values to the \texttt{MooseMesh} ``mirror.'' These steps continue until convergence criteria are achieved. In this work, we
+values back to the \texttt{MooseMesh} ``mirror.'' These steps continue until convergence criteria are achieved. In this work, we
 pursue verification of these multiphysics aspects of Cardinal using a 1-D analytical benchmark from the Naval Nuclear
 Laboratory \cite{analytical-benchmark}.  This work does not require \gls{cfd}, and thus NekRS will be left out of the
 discussion from this point on.
@@ -148,7 +148,7 @@ already been inserted into the energy conservation equation.
 This benchmark uses a one-group assumption for the neutron cross sections. As neutrons transport, heat from fission events deposits
 volumetric power in the slab, causing thermal expansion and affecting the temperature distribution; thermal expansion is restricted
 to only the $x$-direction. This slab elongation feeds back into neutronics and heat conduction by influencing the domain length and
-material density. The slab has convective boundary conditions at the endpoints $x=\pm \frac{L}{2}$ with the heat sink temperature
+material density. The slab has convective boundary conditions at the endpoints $x=\pm L/2$ with the heat sink temperature
 $T_{0}$. The Doppler-broadened, total, microscopic cross section follows an inverse-root temperature relationship,
 \begin{equation}
     \sigma_{t}(x) = \sigma_{t,0}\sqrt{\frac{T_{0}}{T(x)}}.
@@ -159,24 +159,24 @@ Due to thermal expansion, the slab density varies as
 \end{equation}
 This gives a Doppler-broadened, macroscopic, total cross section that accounts for changes in density due to temperature as
 \begin{equation}\begin{aligned} \label{sec:intro:doppler}
-    \Sigma_{t}(x) =&\  \frac{\rho_{0}\sigma_{t,0} N_{A}}{A} \frac{T_{0}}{T(x)}
-    \equiv \Sigma_{t,0}\frac{T_{0}}{T(x)} ,
+    \Sigma_{t}(x) =&\  \frac{\rho_{0}\sigma_{t,0} N_{A}}{A} \frac{T_{0}}{T(x)}\\
+    \equiv&\  \Sigma_{t,0}\frac{T_{0}}{T(x)} ,
 \end{aligned}\end{equation}
-where $ \sigma_{t,0}$ is the total, microscopic cross section at $T_{0}$, $N_{A}$ is Avogadro's number, and $A$ is the mass number
-of the medium. The conduction equation governs heat flow in the slab and can be described in terms of the thermal conductivity
-$\kappa$, the energy released per reaction $q$, the total, macroscopic cross section $\Sigma_{t}$, and the neutron flux $\phi$,
+where $ \sigma_{t,0}$ is the total microscopic cross section at $T_{0}$, $N_{A}$ is Avogadro's number, and $A$ is the mass number
+of the medium. The conduction equation governs energy conservation in the slab and can be described in terms of the thermal conductivity
+$\kappa$, the energy released per reaction $q$, the total macroscopic cross section $\Sigma_{t}$, and the neutron flux $\phi$,
 \begin{equation}
      \frac{d}{dx}\left\lbrack\kappa(T)\frac{dT(x)}{dx}\right\rbrack + q \Sigma_{t}(x)\phi(x) = 0.
 \end{equation}
 Note that typically $q$ represents the energy per fission, but in this benchmark, $q$ is per total reaction.
 
 By defining the problem in this way, the differential equations for thermal conduction and neutron transport have similar forms,
-suggesting that it may be possible to assume that the temperature and flux are related by a constant, $T(x)=f\phi(x)$. This
+suggesting that it may be possible that the temperature and flux are related by a constant, $T(x)=f\phi(x)$. This
 assumption is satisfied by manipulating the \glspl{ode}, inserting the cross section temperature dependence, and matching
 coefficients so that the two \glspl{ode} are of the same form. The matching of coefficients imposes two constraints that give
 equations for the total, microscopic cross section $\sigma_{t,0}$ and the heat transfer coefficient $h$, in terms of the slab
-parameters. An important consequence of this problem is that the fission power is uniform throughout the geometry. For full
-details on the analytical solution's derivation, see \cite{analytical-benchmark}.
+parameters. An important consequence of this problem is that the fission power is uniform throughout the geometry (but the
+flux is not). For full details on the analytical solution's derivation, see \cite{analytical-benchmark}.
 
 \section{COMPUTATIONAL MODEL}\label{sec:model}
 This section describes the OpenMC and \gls{moose} computational models, followed by the coupling's convergence criteria and
@@ -203,9 +203,9 @@ The benchmark's one-group assumption was satisfied using OpenMC's multigroup mod
 with a known function for the temperature dependence, the simulation took advantage of OpenMC's capability for user-defined
 cross sections via the \texttt{XSdata} class. The cross section for each reaction was specified for 50 evenly spaced temperatures
 between 308 K and 358 K (a range slightly larger than, but including the  analytic temperature range from the benchmark) and was
-exported to a library. Then, when running OpenMC in multigroup mode, that library is loaded to determine the appropriate cross section
-in each region as temperature changed via input from Cardinal from iteration to iteration. For a temperature $T$ between two library
-data points, we use the nearest temperature available.
+exported to a library. Then, when running OpenMC in multigroup mode, that library is loaded to determine the appropriate cross
+section in each region as temperature changes from iteration to iteration. For a temperature $T$ between two library data points,
+we use the nearest temperature available.
 
 OpenMC required slight source code modifications to accommodate $S_2$-like transport. In typical OpenMC simulations,
 the physics of each reaction describes the scattering dynamics. The Monte Carlo algorithm is agnostic to the direction
@@ -238,9 +238,9 @@ normalization relies on a source strength, $S$, related to the total system powe
    S = \frac{P}{H} \left[\frac{\textrm{sp}}{\textrm{s}} \right]
 \end{equation}
 where $P=10^{22} \frac{\textrm{eV}}{\textrm{s}}$ is the slab integrated power from the benchmark and $H \left[\frac{\textrm{eV}}{\textrm{sp}} \right]$
-is the total tallied fission heating tally. Each tally must be multiplied by this source strength to convert to physically meaningful units.
-Since OpenMC does not report volume-normalized tallies, it may be necessary to divide by the cell volume for quantities such as neutron flux and
-volumetric heating.
+is the total tallied fission heating tally, where ``sp'' indicates ``source particle.'' Each tally must be multiplied by this source strength to
+convert to physically meaningful units. Since OpenMC does not report volume-normalized tallies, it may be necessary to divide by the cell volume
+for quantities such as neutron flux and volumetric heating.
 
 \subsection{MOOSE Heat Conduction Model}
 \gls{moose} is used to solve for the temperature distribution within the slab via the Heat Conduction Module. In this \gls{moose}
@@ -274,11 +274,11 @@ mesh element. These will be shown in Section \ref{sec:results}.
 
 \gls{moose} provides steady-state detection as an alternate way of detecting convergence. By setting a steady-state tolerance, \gls{moose}
 will iterate until the solution norm changes by less than this tolerance. In Cardinal, OpenMC and NekRS variables are ``external" to other
-\gls{moose} non-linear variables. In this case, the auxiliary variables, including some variables that should not be included in the
-steady-state detection, get added. Some of these auxiliary variables may be irrelevant to the solution's convergence, causing a contribution
-to the steady state norm that is not changing between iterations. This can trick the steady-state detection into ``detecting" convergence
-faster than it should. Thus, this feature was not adopted for this work, though a new issue was opened in the MOOSE repository to allow the
-user to control which auxiliary variables are used to assess convergence.
+\gls{moose} non-linear variables. These auxiliary variables may include some variables that should not be included in the steady-state
+detection (such as field variables storing the OpenMC cell ID, which does not change with iteration but are sometimes used for diagnostics).
+This can trick the steady-state detection into ``detecting" convergence faster than it should. Thus, this feature was not adopted for
+this work, though a new issue was opened in the MOOSE repository to allow the user to control which auxiliary variables are used to
+assess convergence.
 
 In this benchmark, a high number of Picard iterations was used in order to ensure convergence, but other modelers may not want to incur
 the computational cost of running 200 Picard iterations. As long as the user removes any auxiliary variables not used for coupling, they
@@ -287,21 +287,22 @@ could rely on steady-state detection instead.
 \subsection{Data Mapping}
 Cardinal does not require the geometry models used in each single-physics sub-application to exactly match the meshes/geometry used in
 other coupled codes. At the beginning of every Cardinal simulation, a mapping between \gls{moose}'s mesh and other geometry representations
-is established. For a \gls{moose}-OpenMC coupling, the centroid of every mesh element is mapped to a corresponding OpenMC cell. Cardinal
-then creates a tally for every user-requested type in each of the regions of OpenMC that a \gls{moose} centroid falls in. This mapping is
-used for transferring relevant quantities back and forth between Picard iterations. For this simulation, the \gls{moose} geometry and OpenMC
-geometries were intentionally created to have the same dimensions so that the mapping is 1-to-1. Each region in the \texttt{MooseMesh}
-computes a temperature and sends it to a geometrically identical OpenMC region. This same region in an OpenMC solve computes a heat source
-via the fission heating tally and sends it back to \gls{moose} for the next conduction solve. Again, we want to emphasize that this strict
-1:1 mapping is {\it not} mandatory in Cardinal, and rather a general centroid-based many-to-one mapping from elements to cells can be used.
-In order to explore the convergence with spatial resolution, eight different cases were analyzed with $N=[5,10,25,50,100,250,500,1000]$
-spatial elements/cells in both \gls{moose} and OpenMC.
+is established. For a \gls{moose}-OpenMC coupling, the centroid of every MOOSE mesh element is mapped to a corresponding OpenMC cell using
+OpenMC's find-cell routines. Cardinal then creates a tally for every user-requested type in each of the regions of OpenMC that a \gls{moose}
+centroid falls in. This mapping is used for transferring relevant quantities back and forth between Picard iterations. 
+
+For this simulation, the \gls{moose} geometry and OpenMC geometries were intentionally created to have the same dimensions so that the
+mapping is 1-to-1. Each region in the \texttt{MooseMesh} computes a temperature and sends it to a geometrically identical OpenMC region.
+This same region in an OpenMC solve computes a heat source via the fission heating tally and sends it back to \gls{moose} for the next
+conduction solve. Again, we want to emphasize that this strict 1:1 mapping is {\it not} mandatory in Cardinal, and rather a general
+centroid-based, non-conformal, many-to-one mapping from elements to cells can be used. In order to explore the convergence with spatial
+resolution, eight different cases were analyzed with $N=[5,10,25,50,100,250,500,1000]$ spatial elements/cells in both \gls{moose} and OpenMC.
 
 \section{RESULTS}\label{sec:results}
 The results to compare with the benchmark are the temperature distribution, flux distribution, and $k$-eigenvalue. The benchmark provides
 analytical solutions for all of these quantities. An example temperature and flux distribution is shown in Figure \ref{fig:temp_flux_50}
 for the 50 mesh element case. In order to assess the accuracy of the numerical quantities and verify that refining the mesh increases the accuracy, the analytical solution
-was used to compute an $L_{2}$ error norm for temperature and flux. The error computed, $\epsilon_{T}$, is given by
+was used to compute an $L_{2}$ error norm for temperature and flux. The error, $\epsilon_{T}$, is given by
 \begin{equation}
     \epsilon_{T} = \frac{|| T_{a} - T_{x} ||_{2}}{|| T_{a} ||_{2}},
 \end{equation}
@@ -313,34 +314,45 @@ the flux error norm, $\epsilon_{\phi}$, is defined as
 \end{equation}
 \begin{figure}[H]
     \centering
-    \begin{minipage}[b]{0.45\linewidth}
+    \begin{subfigure}{0.395\linewidth}
         \includegraphics[width=\linewidth]{figures/temp_50.png}
-    \end{minipage}
-    \begin{minipage}[b]{0.45\linewidth}
+        \caption{Temperature profile for 50 elements.}
+        \label{fig:temp_50}
+    \end{subfigure}
+    \begin{subfigure}{0.395\linewidth}
         \includegraphics[width=\linewidth]{figures/flux_50.png}
-    \end{minipage}
-    \caption{The computed temperature and flux for 50 mesh elements. The error bars show the relative error of the flux
-    (nearly smaller than the circular marker size).}\label{fig:temp_flux_50}
+        \caption{Flux profile for 50 elements.}
+        \label{fig:flux_50}
+    \end{subfigure}
+    \par\bigskip
+    \caption{Numerical solutions for 50 mesh elements. The error bars show the relative error of the flux, which are
+    nearly smaller than the circular marker sizes.}
+    \label{fig:temp_flux_50}
 \end{figure}
-Figure \ref{fig:error_study} shows how the temperature and flux error norms relate to the number of mesh elements or cells used.
+Figure \ref{fig:error_study} shows the temperature and flux error norms as a function of the number of mesh elements or cells.
 \begin{figure}[H]
     \centering
-    \begin{minipage}[b]{0.45\linewidth}
+    \begin{subfigure}{0.395\linewidth}
         \includegraphics[width=\linewidth]{figures/temp_error_norms.png}
-    \end{minipage}
-    \begin{minipage}[b]{0.45\linewidth}
+        \caption{Temperature error norms.}
+        \label{fig:temp_err}
+    \end{subfigure}
+    \begin{subfigure}{0.395\linewidth}
         \includegraphics[width=\linewidth]{figures/flux_error_norms.png}
-    \end{minipage}
-    \caption{Temperature (left) and flux (right) error norms as a function of heat conduction mesh element count and OpenMC cell count, respectively.}
+        \caption{Flux error norms.}
+        \label{fig:flux_err}
+    \end{subfigure}
+    \par\bigskip
+    \caption{Error norms as a function of heat conduction mesh element count and OpenMC cell count, respectively.}
     \label{fig:error_study}
 \end{figure}
 For the temperature distributions, linear convergence is achieved, as the slope of the temperature line in Figure \ref{fig:error_study} is
 $-0.9986$ ($R^2\approx1.0$). The flux error does not appear to follow a linear pattern for the whole domain like the temperature error does.
 The first four points decrease as the number of cells used increases, but after that the errors do not continue to behave linearly. The slope
-of the first four points is $-1.381$ ($R^2=0.9814$). This does not imply a specific order of convergence, especially as the flux error appears
-to stagnate, suggesting that after $50$ cells, the error will not improve considerably by increasing cell number. Another way of phrasing this
-is that $50$ cells is enough to spatially converge the flux solution. At this point, the cases will be categorically referred in two groups:
-coarse ($5$,$10$,$25$) and fine ($50$,$100$,$250$,$500$,$1000$).
+of the first four points is $-1.381$ ($R^2=0.9814$). The flux error appears to stagnate after $50$ cells, suggesting that the error will not
+improve considerably by increasing cell number because other error components dominate (e.g. stochastic noise, error from a cross section
+library at 50 temperatures, etc.). At this point, the cases will be categorically referred in two groups: coarse ($5$, $10$, $25$) and fine
+($50$, $100$, $250$, $500$, $1000$).
 
 While the $L_2$ error norm of the flux does not exhibit convergence in the same way that the temperature does, the results do compare favorably
 with the analytical results throughout the domain and for all spatial resolutions in the fine group. The ratio between the computed quantity,
@@ -349,36 +361,46 @@ A black line at $C/E = 1$ is marked in each plot indicating perfect agreement. N
 being predicted to within 0.006\% (for the coarsest temperature mesh) and flux is everywhere being predicted to within 0.05\%.
 \begin{figure}[H]
     \centering
-    \begin{minipage}[b]{0.49\linewidth}
+    \begin{subfigure}{0.475\linewidth}
         \includegraphics[width=\linewidth]{figures/fine_temp_num_to_analy_ratios.png}
-    \end{minipage}
-    \begin{minipage}[b]{0.49\linewidth}
+        \caption{Fine temperature $C/E$.}
+        \label{fig:fine_temp_ce}
+    \end{subfigure}
+    \begin{subfigure}{0.475\linewidth}
         \includegraphics[width=\linewidth]{figures/fine_flux_num_to_analy_ratios.png}
-    \end{minipage}
-    \caption{Temperature (left) and flux (right) C/E for the fine cases.}
+        \caption{Fine flux $C/E$.}
+        \label{fig:fine_flux_ce}
+    \end{subfigure}
+    \par\bigskip
+    \caption{$C/E$ for fine cases.}
     \label{fig:fine_ce}
 \end{figure}
 As the mesh refinement increases, the $C/E$ trend towards to the ideal. For comparison, the coarser cases' $C/E$ are included in
-Figure \ref{fig:coarse_ce}. These cases' agreement are a few orders of magnitude larger than the fine cases, though a significant jump
+Figure \ref{fig:coarse_ce}. The $C/E$ errors are a few orders of magnitude larger than the fine cases, and a significant improvement
 in agreement can be seen between each coarse case.
 \begin{figure}[H]
     \centering
-    \begin{minipage}[b]{0.49\linewidth}
+    \begin{subfigure}{0.475\linewidth}
         \includegraphics[width=\linewidth]{figures/coarse_temp_num_to_analy_ratios.png}
-    \end{minipage}
-    \begin{minipage}[b]{0.49\linewidth}
+        \caption{Coarse temperature $C/E$.}
+        \label{fig:coarse_temp_ce}
+    \end{subfigure}
+    \begin{subfigure}{0.475\linewidth}
         \includegraphics[width=\linewidth]{figures/coarse_flux_num_to_analy_ratios.png}
-    \end{minipage}
-    \caption{Temperature (left) and flux (right) C/E for the coarse cases.}
+        \caption{Coarse flux $C/E$.}
+        \label{fig:coarse_flux_ce}
+    \end{subfigure}
+    \par\bigskip
+    \caption{$C/E$ for coarse cases.}
     \label{fig:coarse_ce}
 \end{figure}
 The temperature $C/E$ ratio is computed using \gls{fem}, but since the flux uses a stochastic approach, its $C/E$ depends on two quantities with
 uncertainty. The flux from OpenMC $\hat{\phi}$ has uncertainty $\sigma_{\hat{\phi}}$ and the fission heating tally $\hat{H}$ has uncertainty
 $\sigma_{\hat{H}}$. Writing the flux $C/E$ explicitly gives
-\begin{equation}\label{eq:CE_formula}
-    C/E =
-    \frac{P\hat{\phi}}{V_{cell}\hat{H}\phi_{A}} = \frac{S\hat{\phi}}{V_{cell}\phi_{A}},
-\end{equation}
+\begin{equation}\begin{aligned}\label{eq:CE_formula}
+    C/E =&\ 
+    \frac{P\hat{\phi}}{V_{cell}\hat{H}\phi_{A}}\\ =&\  \frac{S\hat{\phi}}{V_{cell}\phi_{A}},
+\end{aligned}\end{equation}
 where $V_{cell}$ is the tallied region's volume and $\phi_{A}$ is the analytical flux. Propagating both errors:
 \begin{equation}\label{eq:sigma_ce_def}
     \sigma_{C/E}^2 =
@@ -393,27 +415,40 @@ strength and divided by volume. Evaluating the derivatives and simplifying gives
      \left( \frac{\phi}{\phi_{A}}\frac{V_{cell}}{P}\sigma_{H} \right)^2.
 \end{equation}
 Figure \ref{fig:ce_error_bars} shows individual $C/E$ with $2\sigma$ error bars (95\% confidence interval) for all the fine cases. Nearly all points
-are within $2\sigma$ for each mesh choice, indicating that Cardinal is computing a correct flux distribution, within statistical uncertainty. Only a
-handful of points in the $N=250$ case appear to be outside the error bars, but all other cases are fully contained. The coarse cases are excluded, as
-they are expectedly outside the $2\sigma$ error bars.
+are within $2\sigma$, indicating that Cardinal is computing a correct flux distribution, within statistical uncertainty. Only a handful of points in
+the $N=250$ case appear to be outside the error bars, but all other cases are fully contained. The coarse cases are excluded, as they are, expectedly,
+outside the $2\sigma$ error bars.
 \begin{figure}[H]
     \centering
-    \begin{minipage}[b]{0.495\linewidth}
+    \begin{subfigure}{0.405\textwidth}
         \includegraphics[width=\linewidth]{figures/50_flux_CE_error_bars.png}
-    \end{minipage}
-    \begin{minipage}[b]{0.495\linewidth}
+        \caption{$N=50$}
+        \label{fig:s1}
+    \end{subfigure}
+    \begin{subfigure}{0.405\textwidth}
         \includegraphics[width=\linewidth]{figures/100_flux_CE_error_bars.png}
-    \end{minipage}
-    \begin{minipage}[b]{0.495\linewidth}
+        \caption{$N=100$}
+        \label{fig:s2}
+    \end{subfigure}
+    \par\bigskip
+    \begin{subfigure}{0.405\textwidth}
         \includegraphics[width=\linewidth]{figures/250_flux_CE_error_bars}
-    \end{minipage}
-    \begin{minipage}[b]{0.495\linewidth}
+        \caption{$N=250$}
+        \label{fig:s3}
+    \end{subfigure}
+    \begin{subfigure}{0.405\textwidth}
         \includegraphics[width=\linewidth]{figures/500_flux_CE_error_bars}
-    \end{minipage}
-    \begin{minipage}[b]{0.495\linewidth}
+        \caption{$N=500$}
+        \label{fig:s4}
+    \end{subfigure}
+    \par\bigskip
+    \begin{subfigure}{0.405\textwidth}
         \includegraphics[width=\linewidth]{figures/1000_flux_CE_error_bars}
-    \end{minipage}
-    \caption{Each figure above shows a $C/E$ with two-sigma error bars. The top left is the 50 case, followed by the 100 case, 250 case, 500 case, and 1000 case, in order.}
+        \caption{$N=1000$}
+        \label{fig:s5}
+    \end{subfigure}
+    \par\medskip
+    \caption{$C/E$ in blue with two-sigma error bars (gray bounded by purple).}
 \label{fig:ce_error_bars}
 \end{figure}
 
@@ -422,11 +457,9 @@ smaller tally regions. In Monte Carlo, decreasing the volume of a tally region g
 of histories. This seemingly counter-intuitive result is rooted in the benchmark itself. The slab domain length is $L=106.47$ cm; however, the \gls{mfp}
 ranges between $239$ cm for $T=308$ K and $278$ cm for $T=358$ K. This means the average particle track will transport a particle from the source birth
 position to a vacuum boundary condition. Pair that with a spatially uniform birth distribution, and this essentially causes each cell to gain an equal
-number of contributions to its neighbors; since this happens in each case, the relative error in each case stays about constant. This can provide an
-explanation as to why the flux error norms are so close for all the fine cases. Additionally, since the total cross section depends on the slab length
-(\gls{mfp}$\propto \sqrt{L}$), a similar phenomenon would be expected when running this benchmark with a longer domain length.
+number of contributions to its neighbors; since this happens in each case, the relative error in each case stays about constant.
 
-The $k$-eigenvalue for each resolution is reported in Table \ref{tab:data}. The results show close agreement with the analytical solution, as all
+The $k$-eigenvalue for each simulation is reported in Table \ref{tab:data}. The results show close agreement with the analytical solution, as all
 fine cases agree within $4$ pcm. The coarse cases range from $6$ to $67$ pcm difference. The eigenvalues generally agree better as more mesh elements
 are used. The only exception being that the $N=100$ case agrees the best (less than 1 pcm difference from the analytical). The quality agreement is due to
 \keff\ being a system-wide parameter which is less sensitive to spatial discretization of temperature feedback than the flux distribution itself.
@@ -436,18 +469,18 @@ are used. The only exception being that the $N=100$ case agrees the best (less t
     \caption{Eigenvalue with uncertainty for each mesh size, and the difference from the analytical.}
     \begin{tabular}{@{}ccc@{}}
         \toprule
-        Resolution &  \keff & (analytical - numerical) [pcm]\\
+        Resolution &  \keff & (numerical - analytical) [pcm]\\
         \midrule
         analytical & 0.29557 & - \\
         \midrule
-        5 & 0.29624 $\pm$ 0.00003 & -67 $\pm$ 3 \\
-        10 & 0.29581 $\pm$ 0.00004 & -24 $\pm$ 4 \\
-        25 & 0.29563 $\pm$ 0.00004 &  -6 $\pm$ 4 \\
-        50 & 0.29553 $\pm$ 0.00004 & \phantom{-}4 $\pm$ 4 \\
-        100 & 0.29557 $\pm$ 0.00003 & \phantom{-}0 $\pm$ 3 \\
-        250 & 0.29561  $\pm$ 0.00004 &  -4 $\pm$ 4 \\
-        500 & 0.29561 $\pm$ 0.00004 & -4 $\pm$ 4 \\
-        1000 & 0.29558 $\pm$ 0.00004 & -1 $\pm$ 4 \\
+        5    & 0.29624 $\pm$ 0.00003 & \phantom{-}67 $\pm$ 3 \\
+        10   & 0.29581 $\pm$ 0.00004 & \phantom{-}24 $\pm$ 4 \\
+        25   & 0.29563 $\pm$ 0.00004 & \phantom{-}6  $\pm$ 4 \\
+        50   & 0.29553 $\pm$ 0.00004 &           -4  $\pm$ 4 \\
+        100  & 0.29557 $\pm$ 0.00003 & \phantom{-}0  $\pm$ 3 \\
+        250  & 0.29561 $\pm$ 0.00004 & \phantom{-}4  $\pm$ 4 \\
+        500  & 0.29561 $\pm$ 0.00004 & \phantom{-}4  $\pm$ 4 \\
+        1000 & 0.29558 $\pm$ 0.00004 & \phantom{-}1  $\pm$ 4 \\
     \bottomrule
     \end{tabular}
     \label{tab:data}
@@ -457,22 +490,21 @@ are used. The only exception being that the $N=100$ case agrees the best (less t
 Overall, the numerical results show agreement with the analytical solutions. The convergence is first order for the temperature and the $C/E$ for the fluxes
 contain the analytical solution for nearly every point within two-sigma across all fine cases. The eigenvalue also agrees very well for all cases.
 
-While experimental benchmarking is important in for nuclear \gls{ms}, agreement with analytical benchmarks also serve an important purpose. The ability
-to agree with physics theory increases confidence in multiphysics coupling. Though typical industry-grade simulations would not run $S_{2}$ transport,
-this modification allows Cardinal to be compared against a theoretical problem. A companion paper in this conference with Cardinal \cite{aya2023} couples
-OpenMC Monte Carlo transport to NekRS heat conduction. In future work, we will extend our computational model to include NekRS providing the heat
-conduction solution.
+While experimental benchmarking is critical for nuclear \gls{ms}, agreement with analytical benchmarks also serves an important purpose by increasing confidence
+in multiphysics coupling. Though typical industry-grade simulations would not run $S_{2}$ transport, this modification allows Cardinal to be compared against a
+theoretical problem. A companion paper in this conference with Cardinal \cite{aya2023} couples OpenMC Monte Carlo transport to NekRS heat conduction. In future
+work, we will extend our computational model to include NekRS providing the heat conduction solution.
 
 \section*{ACKNOWLEDGEMENTS}
-The authors would like to thank the OpenMC and MOOSE development teams for their guidance in model setup and assistance
-with software. We also want to thank Dr. Griesheimer and Dr. Kooreman for their modeling advice and knowledge about the
-analytical benchmark.
+The authors would like to thank the OpenMC and MOOSE development teams for their guidance in model setup and assistance with software. We also want to thank
+Dr. Griesheimer and Dr. Kooreman for their modeling advice and knowledge about the analytical benchmark.
 
 Regarding the second and third authors, the submitted manuscript has been created by UChicago Argonne, LLC, Operator of Argonne National Laboratory (“Argonne”).
 Argonne, a U.S. \gls{doe} Office of Science laboratory, is operated under Contract No. DE-AC02-06CH11357. The U.S. Government retains for itself, and others
 acting on its behalf, a paid-up nonexclusive, irrevocable worldwide license in said article to reproduce, prepare derivative works, distribute copies to the
 public, and perform publicly and display publicly, by or on behalf of the Government. The \gls{doe} will provide public access to these results of federally
-sponsored research in accordance with the DOE Public Access Plan.
+sponsored research in accordance with the DOE Public Access Plan. This material is based upon work supported by Laboratory Directed Research and Development
+(LDRD) funding from Argonne National Laboratory, provided by the Director, Office of Science, of the U.S. \gls{doe} under Contract No. DE-AC02-06CH11357.
 
 \setlength{\baselineskip}{12pt}
 \bibliographystyle{mc2023}
