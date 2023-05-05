@@ -104,7 +104,7 @@ Monte Carlo-thermal conduction modeling using Cardinal.
 
 \section{INTRODUCTION}
 \label{sec:intro}
-With recent advancements in methods, software, and computing, high-fidelity multiphysics \gls{ms} is becoming an important
+With recent advancements in methods, software, and computing, high-fidelity, multiphysics \gls{ms} is becoming an important
 component of the nuclear engineer's ``toolbox.'' These high-fidelity models substitute more conservative safety factors
 with physics-based simulation. This can reduce uncertainty in analyses, enabling tighter margins to realize improved economics
 and licensing certainty. However, analytical benchmarks and comparison to experimental data are required to assess the stability,
@@ -191,8 +191,8 @@ problems) through the DAGMC plugin, and hence incorporating the thermomechanics 
 \subsection{OpenMC Model}
 \label{sec:model:OpenMC}
 The geometry used in OpenMC must be finite, despite the benchmark being infinite in the $y$ and $z$ directions. The slab is
-divided evenly into $N$ identically-shaped, rectangular cells along the $x$-dimension; the cases here are $N=[5,10,25,50,100,
-250,500,1000]$ cells. In general, reflective boundary conditions can be used to simulate infinite dimensions. Thus, this
+divided evenly into $N$ identically-shaped, rectangular cells along the $x$-dimension; the cases here are $N=[5, 10, 25, 50, 100, 
+250, 500, 1000]$ cells. In general, reflective boundary conditions can be used to simulate infinite dimensions. Thus, this
 benchmark can be represented with vacuum boundary conditions at $x=\pm \frac{L}{2}$ and reflective boundary conditions at
 the $y$ and $z$ boundaries. While reflective boundary conditions in the $y$ and $z$ directions are necessary, in general, to
 establish a 1-D problem, in this benchmark particles only move in the $\pm x$ direction. To simplify normalization of the power
@@ -220,7 +220,7 @@ generations of the simulation also need to have their angular birth distribution
 
 As with any Monte Carlo eigenvalue method, each Picard iteration requires sufficient inactive batches to converge the fission source,
 followed by sufficient active batches to accumulate the relevant tally results. A Shannon Entropy \cite{brown-entropy-2006} study for
-this system was conducted on the 1000 cell case, and found that the Shannon Entropy converges after about 5 inactive batches. While this
+this system was conducted on the 1000 cell case and found that the Shannon Entropy converges after about 5 inactive batches. While this
 may seem like a low number, the problem is 1-D and the initial guess provided to OpenMC is a uniform distribution, which is the same
 shape as the actual converged solution. The $k$-eigenvalue simulation used 50,000 particles per batch, with 50 inactive batches and
 100 active batches for every case.
@@ -231,15 +231,16 @@ performed using the temperature distribution produced from the last Picard itera
 number of batches.
 
 Cardinal kept track of a few tallies in order to compare to the analytical solution: a flux cell tally, a fission heating (kappa-fission)
-cell and global tally, and the eigenvalue \keff, all based on track-length estimators. Though flux and the eigenvalue are the only quantities
-to compare with the benchmark, these other tallies are needed in order to compute a source strength. For an eigenvalue problem, the tally
-normalization relies on a source strength, $S$, related to the total system power:
+cell and global tally, and the eigenvalue \keff. All are based on track-length estimators, except for \keff, which is OpenMC's combined
+estimator. Though flux and the eigenvalue are the only neutronics quantities to compare with the benchmark, these other tallies are needed
+in order to compute a source strength. For an eigenvalue problem, the tally normalization relies on a source strength, $S$, related to the
+total system power:
 \begin{equation} \label{eq:source_strength}
    S = \frac{P}{H} \left[\frac{\textrm{sp}}{\textrm{s}} \right]
 \end{equation}
 where $P=10^{22} \frac{\textrm{eV}}{\textrm{s}}$ is the slab integrated power from the benchmark and $H \left[\frac{\textrm{eV}}{\textrm{sp}} \right]$
 is the total tallied fission heating tally, where ``sp'' indicates ``source particle.'' Each tally must be multiplied by this source strength to
-convert to physically meaningful units. Since OpenMC does not report volume-normalized tallies, it may be necessary to divide by the cell volume
+convert to physically meaningful units. Since OpenMC does not report volume-normalized tallies, it is necessary to divide by the cell volume
 for quantities such as neutron flux and volumetric heating.
 
 \subsection{MOOSE Heat Conduction Model}
@@ -296,13 +297,14 @@ mapping is 1-to-1. Each region in the \texttt{MooseMesh} computes a temperature 
 This same region in an OpenMC solve computes a heat source via the fission heating tally and sends it back to \gls{moose} for the next
 conduction solve. Again, we want to emphasize that this strict 1:1 mapping is {\it not} mandatory in Cardinal, and rather a general
 centroid-based, non-conformal, many-to-one mapping from elements to cells can be used. In order to explore the convergence with spatial
-resolution, eight different cases were analyzed with $N=[5,10,25,50,100,250,500,1000]$ spatial elements/cells in both \gls{moose} and OpenMC.
+resolution, eight different cases were analyzed with $N=[5, 10, 25, 50, 100, 250, 500, 1000]$ spatial elements/cells in both \gls{moose}
+and OpenMC.
 
 \section{RESULTS}\label{sec:results}
 The results to compare with the benchmark are the temperature distribution, flux distribution, and $k$-eigenvalue. The benchmark provides
 analytical solutions for all of these quantities. An example temperature and flux distribution is shown in Figure \ref{fig:temp_flux_50}
-for the 50 mesh element case. In order to assess the accuracy of the numerical quantities and verify that refining the mesh increases the accuracy, the analytical solution
-was used to compute an $L_{2}$ error norm for temperature and flux. The error, $\epsilon_{T}$, is given by
+for the 50 mesh element case. In order to assess the accuracy of the numerical quantities and verify that refining the mesh increases the
+accuracy, the analytical solution was used to compute an $L_{2}$ error norm for temperature and flux. The error, $\epsilon_{T}$, is given by
 \begin{equation}
     \epsilon_{T} = \frac{|| T_{a} - T_{x} ||_{2}}{|| T_{a} ||_{2}},
 \end{equation}
@@ -314,12 +316,12 @@ the flux error norm, $\epsilon_{\phi}$, is defined as
 \end{equation}
 \begin{figure}[H]
     \centering
-    \begin{subfigure}{0.395\linewidth}
+    \begin{subfigure}[b]{0.395\linewidth}
         \includegraphics[width=\linewidth]{figures/temp_50.png}
         \caption{Temperature profile for 50 elements.}
         \label{fig:temp_50}
     \end{subfigure}
-    \begin{subfigure}{0.395\linewidth}
+    \begin{subfigure}[b]{0.395\linewidth}
         \includegraphics[width=\linewidth]{figures/flux_50.png}
         \caption{Flux profile for 50 elements.}
         \label{fig:flux_50}
