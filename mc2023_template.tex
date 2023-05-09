@@ -88,14 +88,14 @@ Heat Transfer and Neutron Transport}
 
 \begin{abstract}
 Cardinal is a multiphysics software tool that couples OpenMC Monte Carlo transport and NekRS \gls{cfd} to the \gls{moose}. This
-work verifies Cardinal for coupled neutron transport and heat conduction using a 1-D analytic solution from previous work by the
+work verifies Cardinal for coupled neutron transport and heat conduction using a 1-D analytical solution from previous work by the
 Naval Nuclear Laboratory. This numerical benchmark includes $S_2$ transport, Doppler-broadened cross sections, thermal conduction
 and expansion, and convective boundary conditions. The goal of this work is to verify Cardinal's basic multiphysics modeling
 capabilities for coupled neutronics and heat conduction. The benchmark provides analytical solutions for the temperature and flux
 distributions, as well as the $k$-eigenvalue. Using these solutions, an $L_{2}$ error norm was computed for each spatial discretization:
 namely finite element heat conduction mesh and Monte Carlo cells. The temperature error showed linear convergence on a log-log plot of
 error vs. mesh element number, with a slope of $-0.9986$ ($R^2\approx 1.0$). Nearly all spatial flux predictions, except a few points
-in the $N=250$ case, space were within $2\sigma$ of the analytic solution, for Monte Carlo cell counts between 50 and 1000. The
+in the $N=250$ case, space were within $2\sigma$ of the analytical solution, for Monte Carlo cell counts between 50 and 1000. The
 eigenvalue \keff~also agrees well with the benchmark value for each mesh size. The outcome of this work is verification of coupled
 Monte Carlo-thermal conduction modeling using Cardinal.
 \end{abstract}
@@ -123,9 +123,10 @@ For coupled neutronics-thermal-fluid simulations with OpenMC, each Picard iterat
 application (e.g. BISON, Pronghorn, NekRS via Cardinal, ...) solves for temperatures and densities; 2)~Cardinal transfers
 temperatures and densities to the OpenMC model; 3)~OpenMC solves for the nuclear heating; and 4)~Cardinal transfers the tally
 values back to the \texttt{MooseMesh} ``mirror.'' These steps continue until convergence criteria are achieved. In this work, we
-pursue verification of these multiphysics aspects of Cardinal using a 1-D analytical benchmark from the Naval Nuclear
-Laboratory \cite{analytical-benchmark}.  This work does not require \gls{cfd}, and thus NekRS will be left out of the
-discussion from this point on.
+pursue verification of these multiphysics aspects of Cardinal using a 1-D analytical benchmark from the Naval Nuclear Laboratory
+\cite{analytical-benchmark}. This work does not require \gls{cfd}, and thus NekRS will be left out of the discussion from this
+point on. However, we note that a companion paper in this conference does use NekRS's heat conduction solver for verification on
+a different, fixed-source benchmark \cite{aya2023}.
 
 The remainder of this paper is organized as follows. In Section \ref{sec:benchmark}, we summarize the analytical benchmark
 modeled in this work. Section \ref{sec:model} then describes the Cardinal computational model of the benchmark. Section
@@ -160,7 +161,7 @@ Due to thermal expansion, the slab density varies as
 This gives a Doppler-broadened, macroscopic, total cross section that accounts for changes in density due to temperature as
 \begin{equation}\begin{aligned} \label{sec:intro:doppler}
     \Sigma_{t}(x) =&\  \frac{\rho_{0}\sigma_{t,0} N_{A}}{A} \frac{T_{0}}{T(x)}\\
-    \equiv&\  \Sigma_{t,0}\frac{T_{0}}{T(x)} ,
+    =&\  \Sigma_{t,0}\frac{T_{0}}{T(x)} ,
 \end{aligned}\end{equation}
 where $ \sigma_{t,0}$ is the total microscopic cross section at $T_{0}$, $N_{A}$ is Avogadro's number, and $A$ is the mass number
 of the medium. The conduction equation governs energy conservation in the slab and can be described in terms of the thermal conductivity
@@ -182,7 +183,7 @@ flux is not). For full details on the analytical solution's derivation, see \cit
 This section describes the OpenMC and \gls{moose} computational models, followed by the coupling's convergence criteria and
 a description of the mapping between OpenMC and \gls{moose} geometries. When the benchmark model was completed, Cardinal did
 not yet support moving geometries in OpenMC. Instead of modeling thermal expansion using thermomechanics, our simulation uses
-the analytic solution for the equilibrium length $L$ from \cite{analytical-benchmark} that accounts for all three physics
+the analytical solution for the equilibrium length $L$ from \cite{analytical-benchmark} that accounts for all three physics
 effects. This simulation accounts for changes in density due to temperature by using the total, macroscopic cross section\ --\
 which absorbs density to become a $\frac{1}{T}$ dependence\ --\ as was mentioned in Section \ref{sec:benchmark}. We note, in
 a companion paper in this conference \cite{novak-2023}, that Cardinal now supports mesh-based geometry (and deforming-mesh
@@ -190,33 +191,33 @@ problems) through the DAGMC plugin, and hence incorporating the thermomechanics 
 
 \subsection{OpenMC Model}
 \label{sec:model:OpenMC}
-The geometry used in OpenMC must be finite, despite the benchmark being infinite in the $y$ and $z$ directions. The slab is
-divided evenly into $N$ identically-shaped, rectangular cells along the $x$-dimension; the cases here are $N=[5, 10, 25, 50, 100, 
-250, 500, 1000]$ cells. In general, reflective boundary conditions can be used to simulate infinite dimensions. Thus, this
-benchmark can be represented with vacuum boundary conditions at $x=\pm \frac{L}{2}$ and reflective boundary conditions at
-the $y$ and $z$ boundaries. While reflective boundary conditions in the $y$ and $z$ directions are necessary, in general, to
-establish a 1-D problem, in this benchmark particles only move in the $\pm x$ direction. To simplify normalization of the power
-integral in Equation (19) of the benchmark, the geometry has $1$ cm dimensions in the $y$ and $z$ directions \cite{analytical-benchmark}.
-Figure \ref{fig:slab_diagram} shows a diagram of the 1-D geometry, governing equations, and boundary conditions for the different physics.
+The slab is divided evenly into $N$ identically-shaped, rectangular cells along the $x$-dimension; the cases here are $N=[5, 10,
+25, 50, 100, 250, 500, 1000]$ cells.  The geometry used in OpenMC must be three-dimensional, despite the benchmark being a 
+one-dimensional problem. In general, reflective boundary conditions can be used to remove dimensions from a problem. Thus, this
+benchmark can be represented with vacuum boundary conditions at $x=\pm \frac{L}{2}$ and reflective boundary conditions at the $y$
+and $z$ boundaries.  To simplify normalization of the power integral in Equation (19) of the benchmark, the geometry has $1$ cm
+dimensions in the $y$ and $z$ directions \cite{analytical-benchmark}. Figure \ref{fig:slab_diagram} shows a diagram of the 1-D
+geometry, governing equations, and boundary conditions for the different physics.
 
 The benchmark's one-group assumption was satisfied using OpenMC's multigroup mode. Since the benchmark uses a fictitious material
 with a known function for the temperature dependence, the simulation took advantage of OpenMC's capability for user-defined
 cross sections via the \texttt{XSdata} class. The cross section for each reaction was specified for 50 evenly spaced temperatures
-between 308 K and 358 K (a range slightly larger than, but including the  analytic temperature range from the benchmark) and was
+between 308 K and 358 K (a range slightly larger than, but including the  analytical temperature range from the benchmark) and was
 exported to a library. Then, when running OpenMC in multigroup mode, that library is loaded to determine the appropriate cross
 section in each region as temperature changes from iteration to iteration. For a temperature $T$ between two library data points,
 we use the nearest temperature available.
 
-OpenMC required slight source code modifications to accommodate $S_2$-like transport. In typical OpenMC simulations,
-the physics of each reaction describes the scattering dynamics. The Monte Carlo algorithm is agnostic to the direction
-particles move, but it is not typically constrained to a discrete directional distribution. However, when modeling this
-benchmark, any history with a particle moving perpendicular to the $x$-direction would attenuate particles in less
+OpenMC required slight source code modifications to accommodate $S_2$-like transport. While reflective boundary conditions in the
+$y$ and $z$ directions are necessary, in general, to establish a 1-D problem, in this benchmark particles only move in the $\pm x$
+direction. In typical OpenMC simulations, the physics of each reaction describes the scattering dynamics. The Monte Carlo algorithm
+is agnostic to the direction particles move, but it is not typically constrained to a discrete directional distribution. However,
+when modeling this benchmark, any history with a particle moving perpendicular to the $x$-direction would attenuate particles in less
 $x$-distance than if particles were constrained to either $\pm x$. To address this, we first use OpenMC's \texttt{PolarAzimuthal}
-distribution to restrict the birth direction of particles to the $\pm x$ direction. We then also modified OpenMC in a
-patched branch to mimic $S_{2}$ transport in two ways. First, when determining the angular cosine of scattering events,
-$\mu$, particles either continue forward ($\mu=1$) or are back-scattered ($\mu=-1$) with equal probability, as opposed to
-sampling the reaction physics for $\mu$. Second, since the simulation uses $k$-eigenvalue mode, neutrons born in subsequent
-generations of the simulation also need to have their angular birth distributions restricted to $\pm x$.
+distribution to restrict the birth direction of particles to the $\pm x$ direction. We then also modified OpenMC in a patched branch
+to mimic $S_{2}$ transport in two ways. First, when determining the angular cosine of scattering events, $\mu$, particles either
+continue forward ($\mu=1$) or are back-scattered ($\mu=-1$) with equal probability, as opposed to sampling the reaction physics
+for $\mu$. Second, since the simulation uses $k$-eigenvalue mode, neutrons born in subsequent generations of the simulation also
+need to have their angular birth distributions restricted to $\pm x$.
 
 As with any Monte Carlo eigenvalue method, each Picard iteration requires sufficient inactive batches to converge the fission source,
 followed by sufficient active batches to accumulate the relevant tally results. A Shannon Entropy \cite{brown-entropy-2006} study for
@@ -231,10 +232,9 @@ performed using the temperature distribution produced from the last Picard itera
 number of batches.
 
 Cardinal kept track of a few tallies in order to compare to the analytical solution: a flux cell tally, a fission heating (kappa-fission)
-cell and global tally, and the eigenvalue \keff. All are based on track-length estimators, except for \keff, which is OpenMC's combined
-estimator. Though flux and the eigenvalue are the only neutronics quantities to compare with the benchmark, these other tallies are needed
-in order to compute a source strength. For an eigenvalue problem, the tally normalization relies on a source strength, $S$, related to the
-total system power:
+cell and global tally, and the eigenvalue \keff. Though flux and the eigenvalue are the only neutronics quantities to compare with the
+benchmark, these other tallies are needed in order to compute a source strength. For an eigenvalue problem, the tally normalization relies
+on a source strength, $S$, related to the total system power:
 \begin{equation} \label{eq:source_strength}
    S = \frac{P}{H} \left[\frac{\textrm{sp}}{\textrm{s}} \right]
 \end{equation}
@@ -246,7 +246,7 @@ for quantities such as neutron flux and volumetric heating.
 \subsection{MOOSE Heat Conduction Model}
 \gls{moose} is used to solve for the temperature distribution within the slab via the Heat Conduction Module. In this \gls{moose}
 model, a mesh is used that has identical dimensions to the cells used in the OpenMC model. While this is not required by Cardinal,
-it allows for 1-to-1 feedback between the temperature computed in \gls{moose} and the heat source computed in OpenMC (and is
+it allows for 1:1 feedback between the temperature computed in \gls{moose} and the heat source computed in OpenMC (and is
 adequate for this geometrically simple benchmark). \gls{moose} solves the conduction equation using the \gls{fem}:
 \begin{equation}\label{eq:conduction}
     - \nabla \cdot [\kappa_{s}(\mathbf{r},T_{s}) \nabla T_{s}(\mathbf{r})] = \dot{q}_{s},
@@ -273,17 +273,15 @@ where $\Phi_{n}$ is the relaxed flux at step $n$ and $\phi_{i}$ is the flux outp
 the convergence of each physics, we plotted error versus mesh element size and compared numerical versus analytical solutions in each
 mesh element. These will be shown in Section \ref{sec:results}.
 
-\gls{moose} provides steady-state detection as an alternate way of detecting convergence. By setting a steady-state tolerance, \gls{moose}
-will iterate until the solution norm changes by less than this tolerance. In Cardinal, OpenMC and NekRS variables are ``external" to other
-\gls{moose} non-linear variables. These auxiliary variables may include some variables that should not be included in the steady-state
-detection (such as field variables storing the OpenMC cell ID, which does not change with iteration but are sometimes used for diagnostics).
-This can trick the steady-state detection into ``detecting" convergence faster than it should. Thus, this feature was not adopted for
-this work, though a new issue was opened in the MOOSE repository to allow the user to control which auxiliary variables are used to
-assess convergence.
-
 In this benchmark, a high number of Picard iterations was used in order to ensure convergence, but other modelers may not want to incur
-the computational cost of running 200 Picard iterations. As long as the user removes any auxiliary variables not used for coupling, they
-could rely on steady-state detection instead.
+the computational cost of running 200 Picard iterations. \gls{moose} provides steady-state detection as an alternate way of detecting
+convergence. By setting a steady-state tolerance, \gls{moose} will iterate until the solution norm changes by less than this tolerance.
+In Cardinal, OpenMC and NekRS variables are ``external" to other \gls{moose} non-linear variables. These auxiliary variables may include
+some variables that should not be included in the steady-state detection (such as field variables storing the OpenMC cell ID, which does
+not change with iteration but are sometimes used for diagnostics). This can trick the steady-state detection into ``detecting" convergence
+faster than it should. Thus, this feature was not adopted for this work, though a new issue was opened in the MOOSE repository to allow
+the user to control which auxiliary variables are used to assess convergence.  As long as the user removes any auxiliary variables not
+used for coupling, they could rely on steady-state detection instead.
 
 \subsection{Data Mapping}
 Cardinal does not require the geometry models used in each single-physics sub-application to exactly match the meshes/geometry used in
@@ -293,7 +291,7 @@ OpenMC's find-cell routines. Cardinal then creates a tally for every user-reques
 centroid falls in. This mapping is used for transferring relevant quantities back and forth between Picard iterations. 
 
 For this simulation, the \gls{moose} geometry and OpenMC geometries were intentionally created to have the same dimensions so that the
-mapping is 1-to-1. Each region in the \texttt{MooseMesh} computes a temperature and sends it to a geometrically identical OpenMC region.
+mapping is 1:1. Each region in the \texttt{MooseMesh} computes a temperature and sends it to a geometrically identical OpenMC region.
 This same region in an OpenMC solve computes a heat source via the fission heating tally and sends it back to \gls{moose} for the next
 conduction solve. Again, we want to emphasize that this strict 1:1 mapping is {\it not} mandatory in Cardinal, and rather a general
 centroid-based, non-conformal, many-to-one mapping from elements to cells can be used. In order to explore the convergence with spatial
@@ -314,15 +312,18 @@ the flux error norm, $\epsilon_{\phi}$, is defined as
 \begin{equation}
     \epsilon_{\phi} =  \frac{|| \phi_{a} - \phi_{x} ||_{2}}{|| \phi_{a} ||_{2}}.
 \end{equation}
+Figure \ref{fig:error_study} shows the temperature and flux error norms as a function of the number of mesh elements or cells.
 \begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.395\linewidth}
-        \includegraphics[width=\linewidth]{figures/temp_50.png}
+        \centering
+        \includegraphics[height=0.7\linewidth]{figures/temp_50.png}
         \caption{Temperature profile for 50 elements.}
         \label{fig:temp_50}
     \end{subfigure}
     \begin{subfigure}[b]{0.395\linewidth}
-        \includegraphics[width=\linewidth]{figures/flux_50.png}
+    \centering
+        \includegraphics[height=0.7\linewidth]{figures/flux_50.png}
         \caption{Flux profile for 50 elements.}
         \label{fig:flux_50}
     \end{subfigure}
@@ -331,7 +332,6 @@ the flux error norm, $\epsilon_{\phi}$, is defined as
     nearly smaller than the circular marker sizes.}
     \label{fig:temp_flux_50}
 \end{figure}
-Figure \ref{fig:error_study} shows the temperature and flux error norms as a function of the number of mesh elements or cells.
 \begin{figure}[H]
     \centering
     \begin{subfigure}{0.395\linewidth}
@@ -363,12 +363,12 @@ A black line at $C/E = 1$ is marked in each plot indicating perfect agreement. N
 being predicted to within 0.006\% (for the coarsest temperature mesh) and flux is everywhere being predicted to within 0.05\%.
 \begin{figure}[H]
     \centering
-    \begin{subfigure}{0.475\linewidth}
+    \begin{subfigure}{0.45\linewidth}
         \includegraphics[width=\linewidth]{figures/fine_temp_num_to_analy_ratios.png}
         \caption{Fine temperature $C/E$.}
         \label{fig:fine_temp_ce}
     \end{subfigure}
-    \begin{subfigure}{0.475\linewidth}
+    \begin{subfigure}{0.45\linewidth}
         \includegraphics[width=\linewidth]{figures/fine_flux_num_to_analy_ratios.png}
         \caption{Fine flux $C/E$.}
         \label{fig:fine_flux_ce}
@@ -382,12 +382,12 @@ Figure \ref{fig:coarse_ce}. The $C/E$ errors are a few orders of magnitude large
 in agreement can be seen between each coarse case.
 \begin{figure}[H]
     \centering
-    \begin{subfigure}{0.475\linewidth}
+    \begin{subfigure}{0.45\linewidth}
         \includegraphics[width=\linewidth]{figures/coarse_temp_num_to_analy_ratios.png}
         \caption{Coarse temperature $C/E$.}
         \label{fig:coarse_temp_ce}
     \end{subfigure}
-    \begin{subfigure}{0.475\linewidth}
+    \begin{subfigure}{0.45\linewidth}
         \includegraphics[width=\linewidth]{figures/coarse_flux_num_to_analy_ratios.png}
         \caption{Coarse flux $C/E$.}
         \label{fig:coarse_flux_ce}
