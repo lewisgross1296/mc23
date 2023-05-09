@@ -149,7 +149,7 @@ already been inserted into the energy conservation equation.
 This benchmark uses a one-group assumption for the neutron cross sections. As neutrons transport, heat from fission events deposits
 volumetric power in the slab, causing thermal expansion and affecting the temperature distribution; thermal expansion is restricted
 to only the $x$-direction. This slab elongation feeds back into neutronics and heat conduction by influencing the domain length and
-material density. The slab has convective boundary conditions at the endpoints $x=\pm L/2$ with the heat sink temperature
+material density. The slab has convective boundary conditions at the endpoints $x=\pm \frac{L}{2}$ with the heat sink temperature
 $T_{0}$. The Doppler-broadened, total, microscopic cross section follows an inverse-root temperature relationship,
 \begin{equation}
     \sigma_{t}(x) = \sigma_{t,0}\sqrt{\frac{T_{0}}{T(x)}}.
@@ -265,7 +265,7 @@ batches and histories per batch. The configurations used here were discussed in 
 In terms of converging global iterations across all single physics, each case used 200 Picard iterations. To assist with
 convergence of Monte Carlo quantities, Robbins-Monro relaxation was applied to the flux and fission heating tallies. This updates the
 quantities of interest for the $n+1$th iteration as an average over the previous $n$ Monte Carlo solutions \cite{dufek}.
-So the flux at iteration $n$ would be given by
+The relaxed flux at iteration $n$ is computed via
 \begin{equation}\label{eq:Robbins-Monro}
     \Phi_{n} = \frac{1}{n+1} \sum_{i=0}^{n} \phi_{i},
 \end{equation}
@@ -306,7 +306,7 @@ accuracy, the analytical solution was used to compute an $L_{2}$ error norm for 
 \begin{equation}
     \epsilon_{T} = \frac{|| T_{a} - T_{x} ||_{2}}{|| T_{a} ||_{2}},
 \end{equation}
-where $T_{a}$ is the analytical solution evaluated at the $x$-centroid of each mesh element and $T_{x}$ is the temperature computed for that
+where $T_{a}$ is the analytical solution evaluated at the $x$-centroid of each mesh element, and $T_{x}$ is the temperature computed for that
 voxel from the multiphysics simulation. The same convergence test was used on the flux solution as well. Using the same notation convention,
 the flux error norm, $\epsilon_{\phi}$, is defined as
 \begin{equation}
@@ -377,9 +377,9 @@ being predicted to within 0.006\% (for the coarsest temperature mesh) and flux i
     \caption{$C/E$ for fine cases.}
     \label{fig:fine_ce}
 \end{figure}
-As the mesh refinement increases, the $C/E$ trend towards to the ideal. For comparison, the coarser cases' $C/E$ are included in
-Figure \ref{fig:coarse_ce}. The $C/E$ errors are a few orders of magnitude larger than the fine cases, and a significant improvement
-in agreement can be seen between each coarse case.
+As the mesh refinement increases, the $C/E$ results trend towards the ideal. For comparison, the coarser cases' $C/E$ results are
+included in Figure \ref{fig:coarse_ce}. The coarse cases' errors are a few orders of magnitude larger than the fine cases. A significant
+improvement in agreement can be seen between each coarse case.
 \begin{figure}[H]
     \centering
     \begin{subfigure}{0.45\linewidth}
@@ -450,7 +450,7 @@ outside the $2\sigma$ error bars.
         \label{fig:s5}
     \end{subfigure}
     \par\medskip
-    \caption{$C/E$ in blue with two-sigma error bars (gray bounded by purple).}
+    \caption{$C/E$ in blue with $2\sigma$ error bars (gray bounded by purple).}
 \label{fig:ce_error_bars}
 \end{figure}
 
@@ -490,7 +490,7 @@ are used. The only exception being that the $N=100$ case agrees the best (less t
 
 \section{CONCLUSIONS}\label{sec:conclusions}
 Overall, the numerical results show agreement with the analytical solutions. The convergence is first order for the temperature and the $C/E$ for the fluxes
-contain the analytical solution for nearly every point within two-sigma across all fine cases. The eigenvalue also agrees very well for all cases.
+contain the analytical solution for nearly every point within $2\sigma$ across all fine cases. The eigenvalue also agrees very well for all cases.
 
 While experimental benchmarking is critical for nuclear \gls{ms}, agreement with analytical benchmarks also serves an important purpose by increasing confidence
 in multiphysics coupling. Though typical industry-grade simulations would not run $S_{2}$ transport, this modification allows Cardinal to be compared against a
